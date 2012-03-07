@@ -1,0 +1,6 @@
+#stdform .status_icon { height: 13px; margin: 2px 5px 0; padding: 7px 9px; width: 17px;}
+#stdform .tips_line { color: #999999; line-height: 25px;}
+#stdform input.error { border: 1px solid #FF0000; color: #FF0000; outline: 2px solid #FFC1C1;}
+#stdform input.focus { border: 1px solid #EFA100; outline: 2px solid #FFDC97;}
+#stdform .tips_error { color: red;}
+#stdform .tips_line { color: #999999; line-height: 25px;}

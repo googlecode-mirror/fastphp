@@ -1,0 +1,294 @@
+<?php
+/**
+ * Project:	 ActionPHP (The MVC Framework)
+ * File:		SampleAction.php
+ *
+ * This framework is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * @author XuLH <hansen@fastphp.org>
+ */
+
+class SQLException extends Exception {}
+
+class DBQuery {
+	/** 是否支持事务 **/
+	public static $supportTransaction = false;
+	/** 已创建的连接集合 **/
+	private static $instances = array();
+	/** 默认连接 **/
+	private static $defaultDsn = __DEFAULT_DSN;
+
+	private $dsn = null;
+	private $logNum = 0;
+	private $scheme = "";
+	private $dblink = "";
+
+	/**
+	 * 构造函数
+	 */
+	private function __construct($dsn) {
+		$this->connect($dsn);
+	}
+
+	/**
+	 * 数据库连接实例
+	 */
+	public static function instance($dsn="") {
+		if(empty($dsn)) {
+			$dsn = self::$defaultDsn;
+		}
+		if(isset(self::$instances[$dsn])) {
+			$instance = self::$instances[$dsn];
+			if(!empty($instance) && is_object($instance)) {
+				return $instance;
+			}
+		}
+		$instance = new DBQuery($dsn);
+		self::$instances[$dsn] = $instance;
+		return $instance;
+	}
+
+	/**
+	 * 事务开始
+	 */
+	public function startTransaction() {
+		if(self::$supportTransaction == false) {
+			return;
+		}
+		$this->executeQuery("START TRANSACTION");
+	}
+
+	/**
+	 * 提交
+	 */
+	public function commit() {
+		if(self::$supportTransaction == false) {
+			return;
+		}
+		$this->executeQuery("COMMIT");
+	}
+
+	/**
+	 * 回滚
+	 */
+	public function rollback() {
+		if(self::$supportTransaction == false) {
+			return;
+		}
+		$this->executeQuery("ROLLBACK");
+	}
+
+	function connect($dsn) {
+		if(empty($dsn)) {
+			throw new Exception("connect dsn is empty.");
+		}
+		//connect
+		$startTime = microtime(true);
+		$this->dsn = $dsn;
+		$info = parse_url($dsn);
+		//other params
+		$params = array();
+		if(!empty($info['query'])) {
+			parse_str($info['query'], $params);
+		}
+		$this->scheme = $info['scheme'];
+		$this->dblink = $this->func("connect", $info['host'], $info['user'], $info['pass'], true);
+		$this->logSQL($this->dblink, "Connect", (microtime(true) - $startTime));
+		//select db
+		$startTime = microtime(true);
+		$db = substr($info['path'], 1); //remove '/'
+		$ret = $this->func("select_db", $db, $this->dblink);
+		$this->logSQL($ret, "select_db({$db})", (microtime(true) - $startTime));
+		//set charset
+		$charset = 'utf8';
+		if(!empty($params['charset'])) {
+			$charset = $params['charset'];
+		}
+		$this->func("set_charset", $charset);
+	}
+
+	function func() {
+		$num = func_num_args();
+		if($num == 0) {
+			throw new Exception("parameter error. must special function name.");
+		}
+		$p = array(func_get_arg(0));
+		$func = $this->scheme . "_" . $p[0];
+		$result = false;
+		$cmd = "\$result = \$func(";
+		for($i=1; $i<$num; $i++) {
+			$p[$i] = func_get_arg($i);
+			if($i == 1) {
+				$cmd .= "\$p[{$i}]";
+			} else {
+				$cmd .= ",\$p[{$i}]";;
+			}
+		}
+		$cmd .= ");";
+		eval($cmd);
+		return $result;
+	}
+
+	function close(){
+		$this->func("close");
+	}
+
+	function getInsertID() {
+		$sql = "SELECT LAST_INSERT_ID()";
+		return $this->getOne($sql);
+	}
+
+	function executeUpdate($sql){
+		$startTime = microtime(true);
+		$result = $this->func("query", $sql, $this->dblink);
+		$this->logSQL($result, $sql, (microtime(true) - $startTime));
+		return $result;
+	}
+
+	function getOne($sql){
+		$row = $this->getRow($sql);
+		if($row == null) {
+			return null;
+		}
+		return current($row);
+	}
+
+	function getRow($sql){
+		$startTime = microtime(true);
+
+		$result = $this->func("query", $sql, $this->dblink);
+		if($result) {
+			$row = $this->func("fetch_assoc", $result);
+			if($row == false) {
+				$row = null;
+			}
+		} else {
+			$row = null;
+		}
+
+		$this->logSQL($result, $sql, (microtime(true) - $startTime));
+		return $row;
+	}
+
+	function getAll($sql){
+		$startTime = microtime(true);
+
+		$result = $this->func("query", $sql, $this->dblink);
+		if($result) {
+			$all = array();
+			while($row = $this->func("fetch_assoc", $result)) {
+				$all[] = $row;
+			}
+		} else {
+			$all = null;
+		}
+
+		$this->logSQL($result, $sql, (microtime(true) - $startTime));
+		return $all;
+	}
+
+	/**
+	 * 过虑特殊字符
+	 */
+	public static function filter($param) {
+		if(is_array($param)) {
+			foreach ($param as $key => &$val) {
+				$val = self::filter($val);
+			}
+			return $param;
+		} else {
+			return addslashes($param);
+		}
+	}
+
+	public static function toUpdateStr($oldRecord, $newRecord) {
+		$keys = array_keys($oldRecord);
+		$str = "";
+		foreach($keys as $key) {
+			if(isset($newRecord[$key]) && $oldRecord[$key] != $newRecord[$key]) {
+				if($str != "") {
+					$str .= ",";
+				}
+				$str .= "$key='".self::filter($newRecord[$key])."'";
+			}
+		}
+		
+		return $str;
+	}
+
+	public static function toUpdateRecord($record) {
+		$keys = array_keys($record);
+		$str = "";
+		foreach($keys as $key) {
+			if(isset($record[$key])) {
+				if($str != "") {
+					$str .= ",";
+				}
+				$str .= "$key='".self::filter($record[$key])."'";
+			}
+		}
+		
+		return $str;
+	}
+	public static function toInsertStr($newRecord) {
+		$keys = array_keys($newRecord);
+		$fields = "";
+		$values = "";
+		foreach($keys as $key) {
+			if($fields != "") {
+				$fields .= ",";
+				$values .= ",";
+			}
+			$fields .= $key;
+			$values .= "'".self::filter($newRecord[$key])."'";
+		}
+		$str = "($fields) VALUES ($values)";
+		return $str;
+	}
+
+	public function logSQL($result, $sql, $costTime) {
+		$costTime = round($costTime, 3);
+		$this->logNum++;
+		if ($result === false){
+			logError("Num: ".$this->logNum.", CostTime: {$costTime}, SQL:\n\t{$sql}");
+			throw new SQLException($this->func("error")."\n\t"."SQL=".$sql);
+		} else {
+			logDebug("Num: ".$this->logNum.", CostTime: {$costTime}, SQL:\n\t{$sql}");
+		}
+	}
+
+    public function select($sql,$currentPage=1,$page=20){
+        $startTime = microtime(true);
+        $start = ($currentPage-1) * $page;
+        $start = $start<0 ? 0 : $start ;
+        //echo $start;
+
+        $sql = trim($sql);
+        if(strtolower(substr($sql, 0, 6)) != 'select') {
+			throw new Exception("Not a SELECT SQL: ".$sql);
+        }
+        $sql = "SELECT SQL_CALC_FOUND_ROWS ".substr($sql, 6);
+        if(preg_match('/LIMIT[\s\,0-9]+$/i', $sql) == false) {
+        	$sql .= " LIMIT {$start}, {$page}";
+        }
+       // echo $sql."<br />";
+        $result = array();
+        $result['data'] = $this->getAll($sql);
+        $result['total'] = $this->getOne("SELECT FOUND_ROWS()");
+		$this->logSQL($result, $sql, (microtime(true) - $startTime));
+		return $result;
+    }
+}
+

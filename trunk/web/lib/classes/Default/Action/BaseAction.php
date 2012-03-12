@@ -92,7 +92,7 @@ abstract class BaseAction extends FastPHP_ActionClass {
 	
 	public function afterExecute() {
 		if($this->displayDisabled == false && $this->isAjaxFlag == false) {
-			logDebug("<center>页面执行时间 ".(microtime(true)-$$this->startTime)."s</center>");
+			logDebug("<center>页面执行时间 ".(microtime(true)-$this->startTime)."s</center>");
 		}
 		
 	}

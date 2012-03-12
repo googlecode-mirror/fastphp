@@ -50,4 +50,10 @@ function __autoload($class) {
 require_once(__ROOT_PATH . "etc/define.php");
 require_once(__ROOT_PATH . "lib/functions/func.Common.php");
 
+//自动创建必要目录
+if(file_exists(__FILES_PATH . "templates_c/") == false) {
+	mkdir(__FILES_PATH . "logs/");
+	mkdir(__FILES_PATH . "templates_c/");
+}
+
 } //end of __FILE_GLOBAL_PHP

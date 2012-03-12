@@ -21,12 +21,9 @@
  */
 
 
-class SampleAction extends BaseAction {
+class HomeAction extends BaseAction {
 	
 	public function doIndexAction() {
-		//显示默认TPL: /tpls/Default/Sample/Index.tpl
-		$this->display();
+		echo "Hello world.";
 	}
-	
-	
 }

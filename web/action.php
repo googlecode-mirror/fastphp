@@ -19,8 +19,8 @@ if(!empty($_REQUEST['actionkey'])) {
 } else {
 	$action = "HomeAction";
 	$method = "Index";
-	if(!empty($_REQUEST['actionphp'])) {
-		$tmp = explode('.', $_REQUEST['actionphp'], 2);
+	if(!empty($_REQUEST['actionkey'])) {
+		$tmp = explode('.', $_REQUEST['actionkey'], 2);
 		$action = $tmp[0].'Action';
 		if(count($tmp) > 1) {
 			$method = $tmp[1];

@@ -24,6 +24,16 @@
 class HomeAction extends BaseAction {
 	
 	public function doIndexAction() {
-		echo "Hello world.";
+		//这是站点首页
+		//可通过以下URL访问：
+		//		/index.php  -  不带任何参数
+		//		/action.php?actionkey=Home  -  仅使用Action名
+		//		/action.php?actionkey=Default_Home  -  Module+Action
+		//		/action.php?actionkey=Default_Home.Index  -  Module+Action+Method
+		
+		//TODO：正式编写代码前，移除下两行代码 
+		$url = RewriteHelper::getURL("Sample");
+		echo "<a href='{$url}'>Demo</a>";
+		
 	}
 }

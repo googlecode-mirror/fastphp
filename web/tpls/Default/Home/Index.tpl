@@ -17,7 +17,7 @@
 	file8='dialog.css'
 }
 {load_js
-	 file1='jquery-1.6.4.min.js'
+	 file1='jquery.js'
 	 file2='jquery.alert.js'
 	 file3='jquery.jqpageflow.js'
 	 file4='jquery.KinSlideshow.min.js'

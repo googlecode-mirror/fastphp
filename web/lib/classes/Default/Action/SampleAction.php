@@ -28,5 +28,9 @@ class SampleAction extends BaseAction {
 		$this->display();
 	}
 	
+	public function doDialogAction() {
+		//显示默认TPL: /tpls/Default/Sample/Dialog.tpl
+		$this->display();
+	}
 	
 }

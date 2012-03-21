@@ -33,7 +33,8 @@ class DBQuery {
 	private $dsn = null;
 	private $logNum = 0;
 	private $scheme = "";
-	private $dblink = "";
+	private $dblink = false;
+	private static $registerClose = true;
 
 	/**
 	 * 构造函数
@@ -90,7 +91,7 @@ class DBQuery {
 		$this->executeQuery("ROLLBACK");
 	}
 
-	function connect($dsn) {
+	public function connect($dsn) {
 		if(empty($dsn)) {
 			throw new Exception("connect dsn is empty.");
 		}
@@ -103,23 +104,30 @@ class DBQuery {
 		if(!empty($info['query'])) {
 			parse_str($info['query'], $params);
 		}
-		$this->scheme = $info['scheme'];
+		$this->scheme = strtolower($info['scheme']);
 		$this->dblink = $this->func("connect", $info['host'], $info['user'], $info['pass'], true);
 		$this->logSQL($this->dblink, "Connect", (microtime(true) - $startTime));
 		//select db
-		$startTime = microtime(true);
-		$db = substr($info['path'], 1); //remove '/'
-		$ret = $this->func("select_db", $db, $this->dblink);
-		$this->logSQL($ret, "select_db({$db})", (microtime(true) - $startTime));
+		if(strlen($info['path']) > 1) { //定义了DB名称
+			$dbname = substr($info['path'], 1); //remove '/'
+			$this->selectDB($dbname);
+		}
 		//set charset
 		$charset = 'utf8';
 		if(!empty($params['charset'])) {
 			$charset = $params['charset'];
 		}
-		$this->func("set_charset", $charset);
+		if($this->scheme == "mysql") {
+			$this->func("set_charset", $charset);
+		}
+		//注册PHP运行结束前关闭所有DB连接
+		if(self::$registerClose) {
+			self::$registerClose = false;
+			register_shutdown_function(array('DBQuery', 'closeAll'));
+		}
 	}
-
-	function func() {
+	
+	protected function func() {
 		$num = func_num_args();
 		if($num == 0) {
 			throw new Exception("parameter error. must special function name.");
@@ -140,24 +148,26 @@ class DBQuery {
 		eval($cmd);
 		return $result;
 	}
-
-	function close(){
-		$this->func("close");
+	
+	public function selectDB($dbname) {
+		$startTime = microtime(true);
+		$ret = $this->func("select_db", $dbname, $this->dblink);
+		$this->logSQL($ret, "select_db({$dbname})", (microtime(true) - $startTime));
 	}
 
-	function getInsertID() {
+	public function getInsertID() {
 		$sql = "SELECT LAST_INSERT_ID()";
 		return $this->getOne($sql);
 	}
 
-	function executeUpdate($sql){
+	public function executeUpdate($sql){
 		$startTime = microtime(true);
 		$result = $this->func("query", $sql, $this->dblink);
 		$this->logSQL($result, $sql, (microtime(true) - $startTime));
 		return $result;
 	}
 
-	function getOne($sql){
+	public function getOne($sql){
 		$row = $this->getRow($sql);
 		if($row == null) {
 			return null;
@@ -165,7 +175,7 @@ class DBQuery {
 		return current($row);
 	}
 
-	function getRow($sql){
+	public function getRow($sql){
 		$startTime = microtime(true);
 
 		$result = $this->func("query", $sql, $this->dblink);
@@ -182,7 +192,7 @@ class DBQuery {
 		return $row;
 	}
 
-	function getAll($sql){
+	public function getAll($sql){
 		$startTime = microtime(true);
 
 		$result = $this->func("query", $sql, $this->dblink);
@@ -199,17 +209,55 @@ class DBQuery {
 		return $all;
 	}
 
+	public function close() {
+		if($this->dblink) {
+			$this->func("close", $this->dblink);
+			$this->dblink = false;
+			unset(self::$instances[$this->dsn]);
+		}
+	}
+	
+	public static function closeAll() {
+		foreach(self::$instances as $key => $obj) {
+			$obj->close();
+			echo "\n<BR>KEY:".$key."\n<BR>";
+		}
+	}
+
 	/**
 	 * 过虑特殊字符
+	 * 类同于addslashes，但支持charset
+	 * @param string/array $param - 需过滤的参数
+	 * @param string $charset - DB中的字符集编码
 	 */
-	public static function filter($param) {
+	public static function filter($param, $charset=__CHARSET) {
 		if(is_array($param)) {
-			foreach ($param as $key => &$val) {
-				$val = self::filter($val);
+			foreach ($param as $key => $val) {
+				$param[$key] = self::filter($val, $charset);
 			}
 			return $param;
 		} else {
-			return addslashes($param);
+			$charset = strtolower($charset);
+			if($charset == 'utf8') $charset = 'utf-8';
+			if($charset == 'latin1') $charset = 'iso-8859-1';
+			$len = mb_strlen($param, $charset);
+			$buff = "";
+			for($i=0; $i<$len; $i++) {
+				$ch = mb_substr($param, $i, 1, $charset);
+				if($ch == "\0") {
+					$ch = "\\0";
+				} else if($ch == "\\" || $ch == "'" || $ch == "\"") {
+					$ch = "\\".$ch;
+				} else if($ch[0] == "\0" && strlen($ch) == 2) { //宽字符
+					if($ch[1] == "\0") {
+						$ch = "\0\\\00";
+					} else if($ch[1] == "\\" || $ch[1] == "'" || $ch[1] == "\"") {
+						$ch = "\0\\".$ch;
+					}
+				}
+				$buff .= $ch;
+			}
+			return $buff;
 		}
 	}
 
@@ -269,26 +317,34 @@ class DBQuery {
 		}
 	}
 
-    public function select($sql,$currentPage=1,$page=20){
-        $startTime = microtime(true);
-        $start = ($currentPage-1) * $page;
-        $start = $start<0 ? 0 : $start ;
-        //echo $start;
+	/**
+	 * 分页查询
+	 * TODO：目前仅支持MYSQL
+	 * @param string $sql - 查询的SQL语句。不含定位符（如MYSQL中的LIMIT字句）
+	 * @param int $pageSize - 每页显示的条数（即，将返回的最大条数）
+	 * @param int $pageNo - 第N页。从第1页开始（小于1的数，自动转换为1）
+	 * @return array(
+	 *    'count'=>int //查询的总条数
+	 *    'data'=>array //查询的行结果集
+	 * )
+	 */
+    public function selectData($sql, $pageSize=20, $pageNo=1) {
+		$startTime = microtime(true);
+		$pageNo = max($pageNo, 1); //页号从1开始计数
+		$offset = ($pageNo-1) * $pageSize;
 
-        $sql = trim($sql);
-        if(strtolower(substr($sql, 0, 6)) != 'select') {
+		$sql = trim($sql);
+		if(strtolower(substr($sql, 0, 6)) != 'select') {
 			throw new Exception("Not a SELECT SQL: ".$sql);
-        }
-        $sql = "SELECT SQL_CALC_FOUND_ROWS ".substr($sql, 6);
-        if(preg_match('/LIMIT[\s\,0-9]+$/i', $sql) == false) {
-        	$sql .= " LIMIT {$start}, {$page}";
-        }
-       // echo $sql."<br />";
-        $result = array();
-        $result['data'] = $this->getAll($sql);
-        $result['total'] = $this->getOne("SELECT FOUND_ROWS()");
+		}
+		$sql = "SELECT SQL_CALC_FOUND_ROWS ".substr($sql, 6);
+		if(preg_match('/LIMIT[\s\,0-9]+$/i', $sql) == false) {
+			$sql .= " LIMIT {$offset}, {$pageSize}";
+		}
+		$result = array();
+		$result['data'] = $this->getAll($sql);
+		$result['count'] = $this->getOne("SELECT FOUND_ROWS()");
 		$this->logSQL($result, $sql, (microtime(true) - $startTime));
 		return $result;
-    }
+	}
 }
-

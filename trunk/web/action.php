@@ -1,34 +1,38 @@
 <?php
 require(dirname(__FILE__) . "/global.php");
 
+
+$fastphp_module = "Default";
+$fastphp_action = "Home";
+$fastphp_method = "Index";
 if(!empty($_REQUEST['actionkey'])) {
 	$actionkey = $_REQUEST['actionkey'];
-	if(!isset($__ACTION_KEY[$actionkey])) {
-		logError("The actionkey is unknown.({$actionkey}).");
-		redirect302("/");
-	}
-	$config = $__ACTION_KEY[$actionkey];
-	//echo $actionkey."<br>";
-	if($config['Module'] != "Default") {
-		$action = $config['Module'] . '_';
+	//检查别名actionkey别名表
+	if(isset($__ACTION_KEY_ALIAS[$actionkey])) {
+		$fastphp_config = $__ACTION_KEY_ALIAS[$actionkey];
+		if(!empty($fastphp_config['Module'])) $fastphp_module = $config['Module'];
+		if(!empty($fastphp_config['Action'])) $fastphp_action = $config['Action'];
+		if(!empty($fastphp_config['Method'])) $fastphp_method = $config['Method'];
 	} else {
-		$action = "";
-	}
-	$action .= $config['Action'] . "Action";
-	$method = $config['Method'];
-} else {
-	$action = "HomeAction";
-	$method = "Index";
-	if(!empty($_REQUEST['actionkey'])) {
 		$tmp = explode('.', $_REQUEST['actionkey'], 2);
-		$action = $tmp[0].'Action';
-		if(count($tmp) > 1) {
-			$method = $tmp[1];
+		if(count($tmp) > 1 && !empty($tmp[1])) $fastphp_method = $tmp[1];
+		if(!empty($tmp[0])) {
+			$fastphp_action = $tmp[0];
+			if(strpos($fastphp_action, "_") > 0) {
+				$tmp = explode('_', $fastphp_action, 2);
+				$fastphp_module = $tmp[0];
+				$fastphp_action = $tmp[1];
+			}
 		}
 	}
 }
 
-//Create Action Class
+if($fastphp_module != "Default") {
+	$fastphp_action = $fastphp_module . $fastphp_action;
+}
+$fastphp_action .= "Action";
 
-$obj = new $action;
-$obj->execute($method);
+//Create Action Class
+$fastphp_obj = new $fastphp_action;
+$fastphp_obj->execute($fastphp_method);
+

@@ -158,42 +158,39 @@ function md5long($md5str) {
 	return $long;
 }
 
-// 二维数组排序函数
-function sysSortArray($ArrayData,$KeyName1,$SortOrder1 = "SORT_ASC",$SortType1 = "SORT_REGULAR")
-{
-  if(!is_array($ArrayData))
-  {
-    return $ArrayData;
-  }
-  // Get args number.
-  $ArgCount = func_num_args();
-  // Get keys to sort by and put them to SortRule array.
-  for($I = 1;$I < $ArgCount;$I ++)
-  {
-    $Arg = func_get_arg($I);
-    if(!preg_match("/SORT/",$Arg))
-    {
-      $KeyNameList[] = $Arg;
-      $SortRule[]    = '$'.$Arg;
-    }
-    else
-    {
-      $SortRule[]    = $Arg;
-    }
-  }
-  // Get the values according to the keys and put them to array.
-  foreach($ArrayData AS $Key => $Info)
-  {
-    foreach($KeyNameList AS $KeyName)
-    {
-      ${$KeyName}[$Key] = $Info[$KeyName];
-    }
-  }
-  
-  // Create the eval string and eval it.
-  $EvalString = 'array_multisort('.join(",",$SortRule).',$ArrayData);';
-  eval ($EvalString);
-  return $ArrayData;
+/**
+ * 二维数排序
+ * @author Hansen
+ * @param $multi_arr - 二维数组。如array(array('field1'=>1,'field2'=>2), array('field1'=>1,'field2'=>2));
+ * 			或 array('key1'=>array('field1'=>1,'field2'=>2), 'key2'=>array('field1'=>1,'field2'=>2));
+ * @param $field - 排序的字段
+ * @param $sort_flag - 顺序 SORT_ASC | SORT_DESC
+ * @param $compare_flag - SORT_REGULAR | SORT_NUMERIC | SORT_STRING | SORT_LOCALE_STRING
+ * @return 排序后的数组
+ */
+function sortArray($multi_arr, $field, $sort_flag=SORT_ASC, $compare_flag=SORT_REGULAR) {
+	$sort_arr = array();
+	$int_index = true;
+	foreach($multi_arr as $key => & $arr) {
+		$sort_arr[$key] = $arr[$field];
+		if(is_int($key) == false) {
+			$int_index = false;
+		}
+	}
+	if($sort_flag == SORT_ASC) {
+		asort($sort_arr, $compare_flag);
+	} else {
+		arsort($sort_arr, $compare_flag);
+	}
+	$result = array();
+	foreach($sort_arr as $key => & $val) {
+		if($int_index) {
+			$result[] = $multi_arr[$key];
+		} else {
+			$result[$key] = $multi_arr[$key];
+		}
+	}
+	return $result;
 }
 
 

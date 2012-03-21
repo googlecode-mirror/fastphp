@@ -71,7 +71,7 @@ define("__FILES_PATH", __ROOT_PATH."files/");
 define("__SETTING_PATH", __ROOT_PATH."files/setting/");
 
 // enable debug.
-define("__LOG_LEVEL", 1); //0: Print DEBUG info; 1: DEBUG; 2: INFO; 3: WARN; 4: ERROR
+define("__LOG_LEVEL", 0); //0: Print DEBUG info; 1: DEBUG; 2: INFO; 3: WARN; 4: ERROR
 
 
 define("__CHARSET", "UTF-8");

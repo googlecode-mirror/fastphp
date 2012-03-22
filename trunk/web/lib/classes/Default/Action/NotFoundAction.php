@@ -1,7 +1,7 @@
 <?php
 /**
  * Project:     ActionPHP (The MVC Framework) 
- * File:        HomeAction.php
+ * File:        NotFoundAction.php
  *
  * This framework is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,19 +21,19 @@
  */
 
 
-class HomeAction extends BaseAction {
+class NotFoundAction extends BaseAction {
 	
 	public function doIndexAction() {
-		//这是站点首页
-		//可通过以下URL访问：
-		//		/index.php  -  不带任何参数
-		//		/action.php?actionkey=Home  -  仅使用Action名
-		//		/action.php?actionkey=Default_Home  -  Module+Action
-		//		/action.php?actionkey=Default_Home.Index  -  Module+Action+Method
 		
-		//TODO：正式编写代码前，移除下两行代码 
-		$url = RewriteHelper::getURL("Sample");
-		echo "<a href='{$url}'>Demo</a>";
+		//显示模板，对应TPL文件：tpls/Default/NotFound/Index.tpl
+		$this->display();
+	}
+	/**
+	 * 程序异常处理
+	 */
+	public function doExceptionAction() {
 		
+		//显示模板，对应TPL文件：tpls/Default/NotFound/Exception.tpl
+		$this->display();
 	}
 }

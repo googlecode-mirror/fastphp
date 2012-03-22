@@ -1,7 +1,7 @@
 <?php
 /**
  * Project:     ActionPHP (The MVC Framework) 
- * File:        SampleAction.php
+ * File:        define.php
  *
  * This framework is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -46,13 +46,13 @@ if(DIRECTORY_SEPARATOR == "/") { //linux
 } else { //windows
 	define("__SITE_ENV", "DEVELOPMENT");
 	/// web urls ///
-	define("__HOME_URL","http://".$_SERVER['HTTP_HOST']."/");
+	define("__HOME_URL", dirname($_SERVER['PHP_SELF'])."/");
 
 	/// DB config ///
 	define("__DEFAULT_DSN", "mysql://root:@localhost/test?charset=UTF8");
 
 	$__RESOURCE_DOMAINS = array(
-		$_SERVER['HTTP_HOST'],
+		__HOME_URL,
 	);
 	$__IMAGE_DOMAINS = array(
 		$_SERVER['HTTP_HOST'],

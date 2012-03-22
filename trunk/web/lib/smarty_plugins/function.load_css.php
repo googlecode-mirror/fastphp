@@ -12,9 +12,16 @@ function smarty_function_load_css($params, &$smarty) {
 		}
 	}
 	ksort($files);
-	$result = __auto_create_css_cache($files);
-	$url = 'system/css.php?key='.$result['md5key']."&res=".$result['resdir'];
-	echo "<link href='{$url}' rel='stylesheet' />\r\n";
+	if(__LOG_LEVEL <= 1) { //DEBUG状态
+		foreach($files as $file) {
+			$url = RewriteHelper::getURL("css", array("file"=>$file));
+			echo "<link href='{$url}' rel='stylesheet' />\r\n";
+		}
+	} else {
+		$result = __auto_create_css_cache($files);
+		$url = 'resource.php?type=css&key='.$result['md5key']."&res=".$result['resdir'];
+		echo "<link href='{$url}' rel='stylesheet' />\r\n";
+	}
 }
 
 function __auto_create_css_cache($files) {
@@ -39,7 +46,7 @@ function __auto_create_css_cache($files) {
 	//2. 检查是否有缓存文件
 	$md5key = md5($check);
 	$result = array('resdir'=>$resdir, 'md5key'=>$md5key);
-	$cacheFile = __ROOT_PATH.'files/res_c/css/'.$resdir.'/'.$md5key.'.js';
+	$cacheFile = __ROOT_PATH.'files/res_c/css/'.$resdir.'/'.$md5key.'.css';
 	if(file_exists($cacheFile)) {
 		return $result;
 	}

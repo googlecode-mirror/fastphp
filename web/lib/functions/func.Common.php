@@ -1,7 +1,7 @@
 <?php
 /**
  * Project:     ActionPHP (The MVC Framework) 
- * File:        SampleAction.php
+ * File:        func.Common.php
  *
  * This framework is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -156,6 +156,20 @@ function md5long($md5str) {
 		$k *= 16;
 	}
 	return $long;
+}
+
+/**
+ * 过滤相对路径（输入路径安全）
+ * 
+ * @param string $path
+ * @return The resulting path will have no symbolic link, or '/../' components. No '/' first. 
+ */
+function filterRelativePath($path) {
+	$path = str_replace(array("\\", ".."), array("/", ""), $path);
+	$path = str_replace("//",	"/", $path);
+	$path = str_replace("//",	"/", $path);
+	$path = ltrim(trim($path), "/");
+	return $path;
 }
 
 /**

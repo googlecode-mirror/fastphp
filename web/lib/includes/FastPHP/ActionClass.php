@@ -1,7 +1,7 @@
 <?php
 /**
  * Project:     ActionPHP (The MVC Framework)
- * File:        BaseAction.php
+ * File:        ActionClass.php
  *
  * This framework is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -270,6 +270,9 @@ abstract class FastPHP_ActionClass {
 	 * Controller层的调用入口函数,在scripts中调用
 	 */
 	public function execute($method=NULL) {
+		static $runCount = 0;
+		$runCount++;
+		
 		$this->beforeExecute();
 		// include smarty class
 		require_once(__ROOT_PATH . '/lib/includes/Smarty/Smarty.class.php');
@@ -303,7 +306,7 @@ abstract class FastPHP_ActionClass {
 			} catch(Exception $e) {
 				logError($e->getMessage() . "\n" . $e->getTraceAsString());
 			}
-			require __ROOT_PATH."notfound.php";
+			if($runCount <= 1) fastphp_run_action("NotFound.Exception");
 		} catch (Exception $e) {
 			logError($e->getMessage() . "\n" . $e->getTraceAsString());
 			try {
@@ -314,7 +317,7 @@ abstract class FastPHP_ActionClass {
 			} catch(Exception $e) {
 				logError($e->getMessage() . "\n" . $e->getTraceAsString());
 			}
-			require __ROOT_PATH."notfound.php";
+			if($runCount <= 1) fastphp_run_action("NotFound.Exception");
 		}
 		$this->afterExecute();
 	}

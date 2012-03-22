@@ -1,4 +1,25 @@
 <?php
+/**
+ * Project:     ActionPHP (The MVC Framework) 
+ * File:        global.php
+ *
+ * This framework is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * @author XuLH <hansen@fastphp.org>
+ */
+
 if(!defined("__FILE_GLOBAL_PHP")) {
 
 define("__FILE_GLOBAL_PHP", true);
@@ -45,6 +66,41 @@ function __autoload($class) {
 	}
 	//echo $classPath . $className."<br>";
 	include_once($classPath . $className . ".php");
+}
+
+//运行FastPHP框架函数
+function fastphp_run_action($actionkey) {
+	global $__ACTION_KEY_ALIAS;
+	$module = "Default";
+	$action = "Home";
+	$method = "Index";
+	if(!empty($_REQUEST['actionkey'])) {
+		$actionkey = $_REQUEST['actionkey'];
+		//检查别名actionkey别名表
+		if(isset($__ACTION_KEY_ALIAS[$actionkey])) {
+			$config = $__ACTION_KEY_ALIAS[$actionkey];
+			if(!empty($config['Module'])) $module = $config['Module'];
+			if(!empty($config['Action'])) $action = $config['Action'];
+			if(!empty($config['Method'])) $method = $config['Method'];
+		} else {
+			$tmp = explode('.', $_REQUEST['actionkey'], 2);
+			if(count($tmp) > 1 && !empty($tmp[1])) $method = $tmp[1];
+			if(!empty($tmp[0])) {
+				$action = $tmp[0];
+				if(strpos($action, "_") > 0) {
+					$tmp = explode('_', $action, 2);
+					$module = $tmp[0];
+					$action = $tmp[1];
+				}
+			}
+		}
+	}
+	if($module != "Default") $action = $module . $action;
+	$action .= "Action";
+	
+	//Create Action Class
+	$obj = new $action;
+	$obj->execute($method);
 }
 
 require_once(__ROOT_PATH . "etc/define.php");

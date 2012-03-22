@@ -12,9 +12,16 @@ function smarty_function_load_js($params, &$smarty) {
 		}
 	}
 	ksort($files);
-	$result = __auto_create_js_cache($files);
-	$url = 'system/js.php?key='.$result['md5key']."&res=".$result['resdir'];
-	echo "<script language='JavaScript' src='{$url}'></script>\r\n";
+	if(__LOG_LEVEL <= 1) { //DEBUG状态
+		foreach($files as $file) {
+			$url = RewriteHelper::getURL("js", array("file"=>$file));
+			echo "<script language='JavaScript' src='{$url}'></script>\r\n";
+		}
+	} else {
+		$result = __auto_create_js_cache($files);
+		$url = 'resource.php?type=js&key='.$result['md5key']."&res=".$result['resdir'];
+		echo "<script language='JavaScript' src='{$url}'></script>\r\n";
+	}
 }
 
 function __auto_create_js_cache($files) {

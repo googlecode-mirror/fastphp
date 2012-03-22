@@ -1,38 +1,27 @@
 <?php
+/**
+ * Project:     ActionPHP (The MVC Framework) 
+ * File:        action.php
+ *
+ * This framework is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * @author XuLH <hansen@fastphp.org>
+ */
+
 require(dirname(__FILE__) . "/global.php");
 
-
-$fastphp_module = "Default";
-$fastphp_action = "Home";
-$fastphp_method = "Index";
-if(!empty($_REQUEST['actionkey'])) {
-	$actionkey = $_REQUEST['actionkey'];
-	//检查别名actionkey别名表
-	if(isset($__ACTION_KEY_ALIAS[$actionkey])) {
-		$fastphp_config = $__ACTION_KEY_ALIAS[$actionkey];
-		if(!empty($fastphp_config['Module'])) $fastphp_module = $config['Module'];
-		if(!empty($fastphp_config['Action'])) $fastphp_action = $config['Action'];
-		if(!empty($fastphp_config['Method'])) $fastphp_method = $config['Method'];
-	} else {
-		$tmp = explode('.', $_REQUEST['actionkey'], 2);
-		if(count($tmp) > 1 && !empty($tmp[1])) $fastphp_method = $tmp[1];
-		if(!empty($tmp[0])) {
-			$fastphp_action = $tmp[0];
-			if(strpos($fastphp_action, "_") > 0) {
-				$tmp = explode('_', $fastphp_action, 2);
-				$fastphp_module = $tmp[0];
-				$fastphp_action = $tmp[1];
-			}
-		}
-	}
-}
-
-if($fastphp_module != "Default") {
-	$fastphp_action = $fastphp_module . $fastphp_action;
-}
-$fastphp_action .= "Action";
-
 //Create Action Class
-$fastphp_obj = new $fastphp_action;
-$fastphp_obj->execute($fastphp_method);
+fastphp_run_action($_REQUEST['actionkey']);
 

@@ -1,4 +1,25 @@
 <?php
+/**
+ * Project:     ActionPHP (The MVC Framework) 
+ * File:        RewriteAction.php
+ *
+ * This framework is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * @author XuLH <hansen@fastphp.org>
+ */
+
 class RewriteHelper {
 	public static function getURL($type, $params=null) {
 		switch($type) {
@@ -6,7 +27,7 @@ class RewriteHelper {
 			case 'img':
 			case 'js':
 			case 'file':
-				$url = self::getResource($type, $params['url']);
+				$url = self::getResource($type, $params['file']);
 				break;
 			default:
 				$url = self::getCustomPage($type, $params);
@@ -18,7 +39,7 @@ class RewriteHelper {
 	protected static function getCustomPage($type, $params) {
 		switch($type) {
 		default:
-			$url = __HOME_URL."action.php?actionphp=".$type;
+			$url = __HOME_URL."action.php?actionkey=".$type;
 			if(empty($params)) {
 				return $url;
 			}
@@ -35,20 +56,20 @@ class RewriteHelper {
 		
 	}
 
-	protected static function getResource($type, $params) {
+	protected static function getResource($type, $url) {
 		$domain = self::getResourceDomain($url);
 		$version = "";
 		switch($type) {
 			case 'css':
-				$prefix = "/res/css/";
+				$prefix = "res/css/";
 				if(defined("__VERSION_CSS")) $version = __VERSION_CSS;
 				break;
 			case 'img':
-				$prefix = "/res/img/";
+				$prefix = "res/img/";
 				if(defined("__VERSION_IMG")) $version = __VERSION_IMG;
 				break;
 			case 'js':
-				$prefix = "/res/js/";
+				$prefix = "res/js/";
 				if(defined("__VERSION_JS")) $version = __VERSION_JS;
 				break;
 			case 'file':
@@ -58,7 +79,7 @@ class RewriteHelper {
 			default:
 				throw new Exception("unknown type.({$type})");
 		}
-		$url = "http://{$domain}".$prefix . $url;
+		$url = "{$domain}".$prefix . $url;
 		if($version != "") $url .= "?".$version;
 		return $url;
 	}

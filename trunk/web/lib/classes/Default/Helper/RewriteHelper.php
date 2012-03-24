@@ -29,6 +29,10 @@ class RewriteHelper {
 			case 'file':
 				$url = self::getResource($type, $params['file']);
 				break;
+			case 'css_c':
+			case 'js_c':
+				$url = self::getCompiledResource($type, $params);
+				break;
 			default:
 				$url = self::getCustomPage($type, $params);
 				break;
@@ -37,27 +41,30 @@ class RewriteHelper {
 	}
 	
 	protected static function getCustomPage($type, $params) {
+		//Note: 在此编写自定义的URL规则
 		switch($type) {
 		default:
-			$url = __HOME_URL."action.php?actionkey=".$type;
-			if(empty($params)) {
-				return $url;
-			}
-			$str = "";
-			foreach($params as $key => $val) {
-				$str .= "&{$key}=".urlencode($val);
-			}
-			$url .= $str;
+			$url = self::getDefaultPage($type, $params);
 		}
 		return $url;
 	}
 
-	protected static function getOtherPage($type, $params) {
-		
+	protected static function getDefaultPage($type, $params) {
+		$url = __HOME_URL."action.php?actionkey=".$type;
+		if(empty($params)) {
+			return $url;
+		}
+		$str = "";
+		foreach($params as $key => $val) {
+			$str .= "&{$key}=".urlencode($val);
+		}
+		$url .= $str;
+		return $url;
 	}
 
 	protected static function getResource($type, $url) {
-		$domain = self::getResourceDomain($url);
+		$baseURL = __RESOURCE_BASE_URL;
+		$prefix = "";
 		$version = "";
 		switch($type) {
 			case 'css':
@@ -74,26 +81,24 @@ class RewriteHelper {
 				break;
 			case 'file':
 				$domain = self::getImageDomain($url);
-				$url = "http://{$domain}".$url;
+				$baseURL = "http://{$domain}/";
 				break;
 			default:
 				throw new Exception("unknown type.({$type})");
 		}
-		$url = "{$domain}".$prefix . $url;
+		$url = $baseURL . $prefix . $url;
 		if($version != "") $url .= "?".$version;
 		return $url;
 	}
 	
-	protected static function getResourceDomain($key) {
-		global $__RESOURCE_DOMAINS;
-		$len = strlen($key);
-		$sum = 0;
-		for($i=0; $i<$len; $i++) {
-			$sum += ord($key[$i]);
+	protected static function getCompiledResource($type, $params) {
+		$url = __HOME_URL . "resource.php?type_c=".$type;
+		$str = "";
+		foreach($params as $key => $val) {
+			$str .= "&{$key}=".urlencode($val);
 		}
-		$mode = $sum % count($__RESOURCE_DOMAINS);
-		return $__RESOURCE_DOMAINS[$mode];
+		$url .= $str;
+		return $url;
 	}
-	
 	
 }

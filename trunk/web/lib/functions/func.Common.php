@@ -104,7 +104,7 @@ function printDebugMessage($message) {
 	static $sPrintNow = "SYS_2xzWu[2,u/1aoz";
 	static $sRegisterShutdown = false;
 	if(defined("__SITE_ENV") && __SITE_ENV == "PRODUCTION"
-		&& $_COOKIE['HP_DEBUG_MSG'] != "PRINT") {
+		&& $_COOKIE['HP_DEBUG_MSG'] != md5('PRINT-'.__SITE_FINGERPRINT)) {
 		return;
 	}
 	if($message == $sPrintNow) {

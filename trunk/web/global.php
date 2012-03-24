@@ -25,9 +25,6 @@ if(!defined("__FILE_GLOBAL_PHP")) {
 define("__FILE_GLOBAL_PHP", true);
 define("__ROOT_PATH", dirname(__FILE__)."/");
 
-date_default_timezone_set("Asia/Shanghai");
-mb_internal_encoding("UTF-8");
-
 /**
  * 自动装载类
  * 类目录结构：
@@ -74,8 +71,8 @@ function fastphp_run_action($actionkey) {
 	$module = "Default";
 	$action = "Home";
 	$method = "Index";
-	if(!empty($_REQUEST['actionkey'])) {
-		$actionkey = $_REQUEST['actionkey'];
+	$actionkey = trim($actionkey);
+	if($actionkey != "") {
 		//检查别名actionkey别名表
 		if(isset($__ACTION_KEY_ALIAS[$actionkey])) {
 			$config = $__ACTION_KEY_ALIAS[$actionkey];
@@ -83,7 +80,7 @@ function fastphp_run_action($actionkey) {
 			if(!empty($config['Action'])) $action = $config['Action'];
 			if(!empty($config['Method'])) $method = $config['Method'];
 		} else {
-			$tmp = explode('.', $_REQUEST['actionkey'], 2);
+			$tmp = explode('.', $actionkey, 2);
 			if(count($tmp) > 1 && !empty($tmp[1])) $method = $tmp[1];
 			if(!empty($tmp[0])) {
 				$action = $tmp[0];
@@ -105,6 +102,11 @@ function fastphp_run_action($actionkey) {
 
 require_once(__ROOT_PATH . "etc/define.php");
 require_once(__ROOT_PATH . "lib/functions/func.Common.php");
+
+//设置PHP运行环境的时区
+date_default_timezone_set(__TIMEZONE);
+//设置mbstring类库的默认字符编码
+mb_internal_encoding(__CHARSET);
 
 //自动创建必要目录
 if(file_exists(__FILES_PATH . "templates_c/") == false) {

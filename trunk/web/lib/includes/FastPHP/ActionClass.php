@@ -240,16 +240,11 @@ abstract class FastPHP_ActionClass {
 		if(method_exists($this, $method)) {
 			call_user_func(array($this, $method));
 		} else {
-			$error = "un-defined method: {$method}";
+			$error = "un-defined method: {$className}.{$method}";
 			throw new Exception($error);
 		}
 	}
 
-
-	/**
-	 * 资源回收
-	 */
-	protected function release() { }
 
 	/**
 	 * Ajax响应
@@ -264,6 +259,7 @@ abstract class FastPHP_ActionClass {
 
 	public function beforeExecute() { }
 	public function beforeDisplay() { }
+	public function occurException(Exception $e) { return true; } //返回true表示继续默认处理
 	public function afterExecute() { }
 	
 	/**
@@ -273,15 +269,17 @@ abstract class FastPHP_ActionClass {
 		static $runCount = 0;
 		$runCount++;
 		
-		$this->beforeExecute();
 		// include smarty class
 		require_once(__ROOT_PATH . '/lib/includes/Smarty/Smarty.class.php');
 		try {
+			//开始执行
+			$this->beforeExecute();
+			
 			$this->request = new HttpRequest();
 			$this->response = new HttpResponse();
 			$this->smarty = new Smarty;
 			$this->smarty->template_dir = __ROOT_PATH . "tpls/";
-			$this->smarty->compile_dir  = __ROOT_PATH . "files/templates_c/";
+			$this->smarty->compile_dir  = __FILES_PATH . "templates_c/";
 			$this->smarty->plugins_dir[] = __ROOT_PATH . 'lib/smarty_plugins';
 			$this->smarty->template_dir = __ROOT_PATH . "tpls/";
 			//指定method
@@ -292,34 +290,19 @@ abstract class FastPHP_ActionClass {
 			$this->check();
 			//执行方法
 			$this->service();
-			//资源回收
-			$this->release();
-			//数据库事务提交(由DBQuery判断是否需要做)
-			//DBQuery::instance()->commit();
+			//完成运行
+			$this->afterExecute();
 		} catch (InputCheckException $e) {
-			logWarn($e->getMessage() . "\n" . $e->getTraceAsString());
-			try {
-				//资源回收
-				$this->release();
-				//数据库事务回滚(由DBQuery判断是否需要做)
-				//DBQuery::instance()->rollback();
-			} catch(Exception $e) {
-				logError($e->getMessage() . "\n" . $e->getTraceAsString());
+			if($this->occurException($e)) {
+				logWarn($e->getMessage() . "\n" . $e->getTraceAsString());
+				if($runCount <= 1) fastphp_run_action("NotFound.Exception");
 			}
-			if($runCount <= 1) fastphp_run_action("NotFound.Exception");
 		} catch (Exception $e) {
-			logError($e->getMessage() . "\n" . $e->getTraceAsString());
-			try {
-				//资源回收
-				$this->release();
-				//数据库事务回滚(由DBQuery判断是否需要做)
-				//DBQuery::instance()->rollback();
-			} catch(Exception $e) {
+			if($this->occurException($e)) {
 				logError($e->getMessage() . "\n" . $e->getTraceAsString());
+				if($runCount <= 1) fastphp_run_action("NotFound.Exception");
 			}
-			if($runCount <= 1) fastphp_run_action("NotFound.Exception");
 		}
-		$this->afterExecute();
 	}
 
 	/**

@@ -31,9 +31,7 @@ define("__HOME_URL", dirname($_SERVER['PHP_SELF'])."/");
 define("__DEFAULT_DSN", "mysql://root:@localhost/test?charset=UTF8");
 
 define("__RESOURCE_BASE_URL", __HOME_URL."res/");
-$__RESOURCE_DOMAINS = array(
-	__HOME_URL,
-);
+
 $__IMAGE_DOMAINS = array(
 	$_SERVER['HTTP_HOST'],
 );

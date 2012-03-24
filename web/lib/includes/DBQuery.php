@@ -68,7 +68,7 @@ class DBQuery {
 		if(self::$supportTransaction == false) {
 			return;
 		}
-		$this->executeQuery("START TRANSACTION");
+		$this->executeUpdate("START TRANSACTION");
 	}
 
 	/**
@@ -78,7 +78,7 @@ class DBQuery {
 		if(self::$supportTransaction == false) {
 			return;
 		}
-		$this->executeQuery("COMMIT");
+		$this->executeUpdate("COMMIT");
 	}
 
 	/**
@@ -88,7 +88,7 @@ class DBQuery {
 		if(self::$supportTransaction == false) {
 			return;
 		}
-		$this->executeQuery("ROLLBACK");
+		$this->executeUpdate("ROLLBACK");
 	}
 
 	public function connect($dsn) {

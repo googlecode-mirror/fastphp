@@ -20,60 +20,47 @@
  * @author XuLH <hansen@fastphp.org>
  */
 
-if(DIRECTORY_SEPARATOR == "/") { //linux
-	define("__SITE_ENV", "PRODUCTION");
+// Site Runtime Environment. Two value options: DEVELOPMENT or PRODUCTION
+// Note: Please set PRODUCTION when your site released.
+define("__SITE_ENV", "DEVELOPMENT");
 
-	/// web urls ///
-	define("__HOME_URL","/");
+/// web urls ///
+define("__HOME_URL", dirname($_SERVER['PHP_SELF'])."/");
 
-	/// DB config ///
-	define("__DEFAULT_DSN", "mysql://root:@localhost/test?charset=UTF8");
-	
-	$__RESOURCE_DOMAINS = array(
-		$_SERVER['HTTP_HOST'],
-	);
-		
-	$__IMAGE_DOMAINS = array(
-		$_SERVER['HTTP_HOST'],
-	);
-	
-	// sphinx search
-	define("__SPHINX_HOST", "127.0.0.1");
-	define("__SPHINX_PORT", 9312);
-	
-	/// directory ///
-	define("__PHP_CLI", "php ");
-} else { //windows
-	define("__SITE_ENV", "DEVELOPMENT");
-	/// web urls ///
-	define("__HOME_URL", dirname($_SERVER['PHP_SELF'])."/");
+/// DB config ///
+define("__DEFAULT_DSN", "mysql://root:@localhost/test?charset=UTF8");
 
-	/// DB config ///
-	define("__DEFAULT_DSN", "mysql://root:@localhost/test?charset=UTF8");
+define("__RESOURCE_BASE_URL", __HOME_URL."res/");
+$__RESOURCE_DOMAINS = array(
+	__HOME_URL,
+);
+$__IMAGE_DOMAINS = array(
+	$_SERVER['HTTP_HOST'],
+);
 
-	$__RESOURCE_DOMAINS = array(
-		__HOME_URL,
-	);
-	$__IMAGE_DOMAINS = array(
-		$_SERVER['HTTP_HOST'],
-	);
-	
-	// sphinx search
-	define("__SPHINX_HOST", "127.0.0.1");
-	define("__SPHINX_PORT", 9312);
-	
-	/// directory ///
-	define("__PHP_CLI", "php ");
-}
+// sphinx search
+define("__SPHINX_HOST", "127.0.0.1");
+define("__SPHINX_PORT", 9312);
+
+/// directory ///
+define("__PHP_CLI", "php ");
 
 /// physical path ///
 define("__FILES_PATH", __ROOT_PATH."files/");
 define("__SETTING_PATH", __ROOT_PATH."files/setting/");
 
-// enable debug.
-define("__LOG_LEVEL", 0); //0: Print DEBUG info; 1: DEBUG; 2: INFO; 3: WARN; 4: ERROR
+// Site Fingerprint - recommend you to change to a random security code
+define("__SITE_FINGERPRINT", md5(__DEFAULT_DSN.__FILE__));
 
+// Log Level - smaller value will more log
+// Note: __LOG_LEVEL==0 and __SITE_ENV=='DEVELOPMENT' 
+//       __LOG_LEVEL==0 and __SITE_ENV=='PRODUCTION' and $_COOKIE['HP_DEBUG_MSG'] == md5('PRINT-'.__SITE_FINGERPRINT)
+//       will print debug message on the bottom of html page  
+define("__LOG_LEVEL", 2); //0: DEBUG and PRINT; 1: DEBUG; 2: INFO; 3: WARN; 4: ERROR
 
+// The default timezone for PHP runtime
+define("__TIMEZONE", "Asia/Shanghai");
+// The default charset for mbstring, DB, HTML page
 define("__CHARSET", "UTF-8");
 
 // Email Sender

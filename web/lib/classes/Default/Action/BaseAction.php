@@ -85,14 +85,19 @@ abstract class BaseAction extends FastPHP_ActionClass {
 		//默认增加页面类型的META规则调用
 		$tplValues = array();
 		if(!isset($tplValues['meta']) && ($actionkey = $this->request->getParameter("actionkey"))) {
-		//	$tplValues['meta'] = SEOMetaDao::getMeta($actionkey);
+			//TODO
 		}
 		$this->smarty->assign($tplValues);
 	}
 	
+	public function occurException(Exception $e) {
+		return true; //表示继续执行默认规则 
+	}
+	
 	public function afterExecute() {
 		if($this->displayDisabled == false && $this->isAjaxFlag == false) {
-			logDebug("<center>页面执行时间 ".(microtime(true)-$this->startTime)."s</center>");
+			logDebug("<center>Page Execution Time: <font color='red'>"
+				.round(microtime(true)-$this->startTime, 3)."</font>s</center>");
 		}
 		
 	}

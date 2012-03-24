@@ -19,7 +19,7 @@ function smarty_function_load_js($params, &$smarty) {
 		}
 	} else {
 		$result = __auto_create_js_cache($files);
-		$url = 'resource.php?type=js&key='.$result['md5key']."&res=".$result['resdir'];
+		$url = RewriteHelper::getURL("js_c", array("key"=>$result['md5key'],"res"=>$result['resdir']));
 		echo "<script language='JavaScript' src='{$url}'></script>\r\n";
 	}
 }
@@ -46,7 +46,7 @@ function __auto_create_js_cache($files) {
 	//2. 检查是否有缓存文件
 	$md5key = md5($check);
 	$result = array('resdir'=>$resdir, 'md5key'=>$md5key);
-	$cacheFile = __ROOT_PATH.'files/res_c/js/'.$resdir.'/'.$md5key.'.js';
+	$cacheFile = __FILES_PATH.'res_c/js/'.$resdir.'/'.$md5key.'.js';
 	if(file_exists($cacheFile)) {
 		return $result;
 	}
@@ -55,7 +55,7 @@ function __auto_create_js_cache($files) {
 		//检查是否已是.min文件
 		$originFile = __ROOT_PATH.'res/js/'.$info['file'];
 		if(substr($info['file'], -7, 4) != '.min') { //转换为.min文件
-			$minFile = __ROOT_PATH.'files/res_c/jsmin/'.substr($info['file'], 0, -2).$info['mtime'].'.min.js';
+			$minFile = __FILES_PATH.'res_c/jsmin/'.substr($info['file'], 0, -2).$info['mtime'].'.min.js';
 			if(file_exists($minFile) == false) {
 				$str = JSMin::minify(file_get_contents($originFile));
 				if(file_exists(dirname($minFile)) == false) {

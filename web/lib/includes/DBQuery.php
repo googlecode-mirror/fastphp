@@ -220,7 +220,6 @@ class DBQuery {
 	public static function closeAll() {
 		foreach(self::$instances as $key => $obj) {
 			$obj->close();
-			echo "\n<BR>KEY:".$key."\n<BR>";
 		}
 	}
 
@@ -329,7 +328,6 @@ class DBQuery {
 	 * )
 	 */
     public function selectData($sql, $pageSize=20, $pageNo=1) {
-		$startTime = microtime(true);
 		$pageNo = max($pageNo, 1); //页号从1开始计数
 		$offset = ($pageNo-1) * $pageSize;
 
@@ -344,7 +342,6 @@ class DBQuery {
 		$result = array();
 		$result['data'] = $this->getAll($sql);
 		$result['count'] = $this->getOne("SELECT FOUND_ROWS()");
-		$this->logSQL($result, $sql, (microtime(true) - $startTime));
 		return $result;
 	}
 }

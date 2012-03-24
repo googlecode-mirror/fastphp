@@ -1,2 +1,3 @@
-<br>
+<div>
 Footer
+</div>

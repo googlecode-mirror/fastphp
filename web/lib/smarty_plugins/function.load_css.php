@@ -19,7 +19,7 @@ function smarty_function_load_css($params, &$smarty) {
 		}
 	} else {
 		$result = __auto_create_css_cache($files);
-		$url = 'resource.php?type=css&key='.$result['md5key']."&res=".$result['resdir'];
+		$url = RewriteHelper::getURL("css_c", array("key"=>$result['md5key'],"res"=>$result['resdir']));
 		echo "<link href='{$url}' rel='stylesheet' />\r\n";
 	}
 }
@@ -46,7 +46,7 @@ function __auto_create_css_cache($files) {
 	//2. 检查是否有缓存文件
 	$md5key = md5($check);
 	$result = array('resdir'=>$resdir, 'md5key'=>$md5key);
-	$cacheFile = __ROOT_PATH.'files/res_c/css/'.$resdir.'/'.$md5key.'.css';
+	$cacheFile = __FILES_PATH.'res_c/css/'.$resdir.'/'.$md5key.'.css';
 	if(file_exists($cacheFile)) {
 		return $result;
 	}
@@ -54,6 +54,12 @@ function __auto_create_css_cache($files) {
 	foreach($loadFiles as $info) {
 		$originFile = __ROOT_PATH.'res/css/'.$info['file'];
 		$str = file_get_contents($originFile);
+		$baseURL = __RESOURCE_BASE_URL."css/";
+		$subdir = dirname($info['file']);
+		if($subdir != "") {
+			$baseURL .= $subdir . "/";
+		}
+		$str = FastPHP_CSSMin::minify($str, $baseURL);
 		$data .= $str . "\r\n";
 	}
 	if(file_exists(dirname($cacheFile)) == false) {

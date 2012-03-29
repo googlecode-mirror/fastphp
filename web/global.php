@@ -92,7 +92,7 @@ function fastphp_run_action($actionkey) {
 			}
 		}
 	}
-	if($module != "Default") $action = $module . $action;
+	if($module != "Default") $action = $module .'_'. $action;
 	$action .= "Action";
 	
 	//Create Action Class

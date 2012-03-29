@@ -68,15 +68,15 @@ class RewriteHelper {
 		$version = "";
 		switch($type) {
 			case 'css':
-				$prefix = "res/css/";
+				$prefix = "css/";
 				if(defined("__VERSION_CSS")) $version = __VERSION_CSS;
 				break;
 			case 'img':
-				$prefix = "res/img/";
+				$prefix = "img/";
 				if(defined("__VERSION_IMG")) $version = __VERSION_IMG;
 				break;
 			case 'js':
-				$prefix = "res/js/";
+				$prefix = "js/";
 				if(defined("__VERSION_JS")) $version = __VERSION_JS;
 				break;
 			case 'file':

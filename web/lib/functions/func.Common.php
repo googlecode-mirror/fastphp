@@ -130,6 +130,11 @@ function printDebugMessage($message) {
 function println($msg) {
 	echo $msg."\r\n";
 }
+function redirect301($url) {
+	header("HTTP/1.1 301 Moved Permanently");
+	header("Location: $url");
+	exit();
+}
 function redirect302($url) {
 	header("Location: ".$url);
 	exit;
@@ -183,8 +188,12 @@ function filterRelativePath($path) {
  * @return 排序后的数组
  */
 function sortArray($multi_arr, $field, $sort_flag=SORT_ASC, $compare_flag=SORT_REGULAR) {
+	$result = array();
 	$sort_arr = array();
 	$int_index = true;
+	if(empty($multi_arr)) {
+		return $result;
+	}
 	foreach($multi_arr as $key => & $arr) {
 		$sort_arr[$key] = $arr[$field];
 		if(is_int($key) == false) {
@@ -196,7 +205,6 @@ function sortArray($multi_arr, $field, $sort_flag=SORT_ASC, $compare_flag=SORT_R
 	} else {
 		arsort($sort_arr, $compare_flag);
 	}
-	$result = array();
 	foreach($sort_arr as $key => & $val) {
 		if($int_index) {
 			$result[] = $multi_arr[$key];

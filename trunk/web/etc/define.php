@@ -25,7 +25,7 @@
 define("__SITE_ENV", "DEVELOPMENT");
 
 /// web urls ///
-define("__HOME_URL", dirname($_SERVER['PHP_SELF'])."/");
+define("__HOME_URL", "/");
 
 /// DB config ///
 define("__DEFAULT_DSN", "mysql://root:@localhost/test?charset=UTF8");

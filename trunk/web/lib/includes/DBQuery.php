@@ -105,7 +105,11 @@ class DBQuery {
 			parse_str($info['query'], $params);
 		}
 		$this->scheme = strtolower($info['scheme']);
-		$this->dblink = $this->func("connect", $info['host'], $info['user'], $info['pass'], true);
+		$host = $info['host'];
+		if(!empty($info['port'])) {
+			$host .= ":" . $info['port'];
+		}
+		$this->dblink = $this->func("connect", $host, $info['user'], $info['pass'], true);
 		$this->logSQL($this->dblink, "Connect", (microtime(true) - $startTime));
 		//select db
 		if(strlen($info['path']) > 1) { //定义了DB名称

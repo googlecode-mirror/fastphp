@@ -2,6 +2,12 @@
 
 
 function smarty_function_load_css($params, &$smarty) {
+	$loadMethod = ResourceHelper::getLoadMethod();
+	//装载外部资源
+	if($loadMethod == "EXTERNAL") {
+		if(load_external_resource("css", $params)) return;
+	}
+		
 	$files = array();
 	foreach($params as $key => $val) {
 		if(substr($key, 0, 4) == 'file') {
@@ -12,11 +18,14 @@ function smarty_function_load_css($params, &$smarty) {
 		}
 	}
 	ksort($files);
-	if(__LOG_LEVEL <= 1) { //DEBUG状态
+	if($loadMethod == "ORIGIN") { //显示原始文件
 		foreach($files as $file) {
 			$url = RewriteHelper::getURL("css", array("file"=>$file));
 			echo "<link href='{$url}' rel='stylesheet' />\r\n";
 		}
+	} else if($loadMethod == "PAGE") { //显示到页面中
+		$result = __auto_create_css_cache($files, true);
+		echo "<style>\r\n".trim($result['data'])."\r\n</style>\r\n";
 	} else {
 		$result = __auto_create_css_cache($files);
 		$url = RewriteHelper::getURL("css_c", array("key"=>$result['md5key'],"res"=>$result['resdir']));
@@ -24,7 +33,12 @@ function smarty_function_load_css($params, &$smarty) {
 	}
 }
 
-function __auto_create_css_cache($files) {
+function __auto_create_css_cache($files, $returnData=false) {
+	if(ResourceHelper::isExternalOpen() && defined("__EXTERNAL_RES_URL")) {
+		$baseURL = __EXTERNAL_RES_URL;
+	} else {
+		$baseURL = __RESOURCE_BASE_URL;
+	}
 	//1. 检查文件是否存在，并取得最后修改时间
 	$loadFiles = array();
 	$check = "";
@@ -48,23 +62,29 @@ function __auto_create_css_cache($files) {
 	$result = array('resdir'=>$resdir, 'md5key'=>$md5key);
 	$cacheFile = __FILES_PATH.'res_c/css/'.$resdir.'/'.$md5key.'.css';
 	if(file_exists($cacheFile)) {
+		if($returnData) {
+			$result['data'] = file_get_contents($cacheFile);
+		}
 		return $result;
 	}
 	$data = "";
 	foreach($loadFiles as $info) {
 		$originFile = __ROOT_PATH.'res/css/'.$info['file'];
 		$str = file_get_contents($originFile);
-		$baseURL = __RESOURCE_BASE_URL."css/";
+		$subBaseURL = $baseURL."css/";
 		$subdir = dirname($info['file']);
 		if($subdir != "") {
-			$baseURL .= $subdir . "/";
+			$subBaseURL .= $subdir . "/";
 		}
-		$str = FastPHP_CSSMin::minify($str, $baseURL);
+		$str = FastPHP_CSSMin::minify($str, $subBaseURL);
 		$data .= $str . "\r\n";
 	}
 	if(file_exists(dirname($cacheFile)) == false) {
 		mkdir(dirname($cacheFile), 0777, true);
 	}
 	file_put_contents($cacheFile, $data);
+	if($returnData) {
+		$result['data'] = $data;
+	}
 	return $result;
 }

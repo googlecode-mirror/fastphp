@@ -30,11 +30,25 @@ define("__HOME_URL", "/");
 /// DB config ///
 define("__DEFAULT_DSN", "mysql://root:@localhost/test?charset=UTF8");
 
-define("__RESOURCE_BASE_URL", __HOME_URL."res/");
-
 $__IMAGE_DOMAINS = array(
 	$_SERVER['HTTP_HOST'],
 );
+
+define("__RESOURCE_BASE_URL", __HOME_URL."res/");
+// process method for load_js & load_css.
+// optional parameter: AUTO, URL, PAGE, ORIGIN, EXTERNAL
+// Be overwritten by $_RESOURCE_CONFIG['LOAD_METHOD']
+define("__RESOURCE_LOAD_METHOD", "ORIGIN");
+// load external resource to save main network traffic and improve performace
+// Be overwritten by $_RESOURCE_CONFIG['EXTERNAL_SWITCH']
+define("__EXTERNAL_RES_SWITCH", false);
+// load_js contains 'jquery.js' or 'jquery.min.js' will priority to use external jquery url
+// Google - https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
+define("__EXTERNAL_JQUERY_URL", "http://lib.sinaapp.com/js/jquery/1.7.2/jquery.min.js");
+// declare the global value of $_RESOURCE_CONFIG to use this feature
+// global $_RESOURCE_CONFIG('path'=>under of __EXTERNAL_RES_URL, 'name'=>filename(no postfix), 'version'=>optional)
+define("__EXTERNAL_RES_URL", "http://storage.aliyun.com/your_bucket/");
+
 
 // sphinx search
 define("__SPHINX_HOST", "127.0.0.1");

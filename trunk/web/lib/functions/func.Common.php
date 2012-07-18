@@ -215,4 +215,36 @@ function sortArray($multi_arr, $field, $sort_flag=SORT_ASC, $compare_flag=SORT_R
 	return $result;
 }
 
+function load_external_resource($type, &$params) {
+	global $_RESOURCE_CONFIG;
+	static $loaded = array();
+	if(ResourceHelper::isExternalOpen()) {
+		return false;
+	}
+	if(defined("__EXTERNAL_RES_URL") && !empty($_RESOURCE_CONFIG) && !empty($_RESOURCE_CONFIG['name'])) {
+		$url = __EXTERNAL_RES_URL . "resource/";
+		if(!empty($_RESOURCE_CONFIG['path'])) {
+			$url .= $_RESOURCE_CONFIG['path'];
+		}
+		$url .= $_RESOURCE_CONFIG['name'];
+		if(isset($loaded[$type])) {
+			$loaded[$type]++;
+			$url .= "_" . $loaded[$type];
+		} else {
+			$loaded[$type] = 1;
+		}
+		$url .= ".".$type;
+		if(!empty($_RESOURCE_CONFIG['version'])) {
+			$url .= "?".$_RESOURCE_CONFIG['version'];
+		}
+		if($type == "css") {
+			echo "<link href='{$url}' rel='stylesheet' />\r\n";
+			return true;
+		} else if($type == "js") {
+			echo "<script language='JavaScript' src='{$url}'></script>\r\n";
+			return true;
+		}
+	}
+	return false;
+}
 

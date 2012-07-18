@@ -65,10 +65,12 @@ class CURL {
 	var $callback = false;
 	public static $instances = array();
 	private $timeout = 30; //默认超时时间为30秒
+	private $cookiePool = array();
 	/**
 	 * @var bool 是否在curl内容中返回header信息
 	 */
 	private $headerEnabled = true;
+	private $customerCookies = array();
 
 	function getInstance()
 	{
@@ -81,6 +83,9 @@ class CURL {
     	$instance = new CURL();
     	self::$instances[1] = $instance;
     	return $instance;
+	}
+	function addCookie($cookieName, $cookieValue) {
+		$this->customerCookies[$cookieName] = $cookieValue;
 	}
 	function setCallback($func_name) {
 		$this->callback = $func_name;
@@ -102,8 +107,34 @@ class CURL {
 		}
 		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_COOKIEJAR, 'cookie.txt');
-		curl_setopt($ch, CURLOPT_COOKIEFILE, 'cookie.txt');
+		//增加COOKIE
+		$info = parse_url($url);
+		$domainTree = $this->getDomainTree($info['host']);
+		$usingCookies = array();
+		foreach($domainTree as $domain) {
+			if(isset($this->cookiePool[$domain]) == false) {
+				continue;
+			}
+			$optionsCookies = $this->cookiePool[$domain];
+			foreach($optionsCookies as $cookieName => $cookieInfo) {
+				$usingCookies[$cookieName] = $cookieInfo['value'];
+			}
+		}
+		//增加Customer Cookie
+		foreach($this->customerCookies as $name => $value) {
+			$usingCookies[$name] = $value;
+		}
+		if(count($usingCookies) > 0) {
+			$cookieStr = "";
+			foreach($usingCookies as $name => $value) {
+				if($cookieStr != "") {
+					$cookieStr .= "; ";
+				}
+				$cookieStr .= $name."=".$value;
+			}
+			curl_setopt($ch, CURLOPT_COOKIE, $cookieStr);
+		}
+		
 		if ($method == 'POST') {
 			curl_setopt($ch, CURLOPT_POST, 1);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $vars);
@@ -113,6 +144,55 @@ class CURL {
 		//获得请求状态及数据
 		$data = curl_exec($ch);
 		$info = curl_getinfo($ch);
+		if($this->headerEnabled) {
+			$info['header'] = "";
+			if($pos = strpos($data, "\r\n\r\n")) {
+				$info['header'] = substr($data, 0, $pos);
+				$data = substr($data, $pos+4);
+			}
+			//解析header，取得Cookie
+			$arr = explode("\r\n", $info['header']);
+			if(count($arr) == 1 && strpos($arr[0], " 100 ")) {
+				if($pos = strpos($data, "\r\n\r\n")) {
+					$info['header'] = substr($data, 0, $pos);
+					$data = substr($data, $pos+4);
+				}
+				//解析header，取得Cookie
+				$arr = explode("\r\n", $info['header']);
+			}
+			foreach($arr as $line) {
+				$arr2 = explode(":", $line, 2);
+				if(strtolower($arr2[0]) != 'set-cookie') {
+					continue;
+				}
+				$arr3 = explode(";", $arr2[1]);
+				$cnt3 = count($arr3);
+				$cookieName = "";
+				$record = array();
+				for($i=0; $i<$cnt3; $i++) {
+					$arr4 = explode("=", $arr3[$i], 2);
+					$name = trim($arr4[0]);
+					$value = trim($arr4[1]);
+					if($i == 0) { //第1个是Cookie变量
+						$cookieName = $name;
+						$record['value'] = $value; 
+					} else {
+						$record[$name] = $value;
+					}
+				}
+				if($cookieName == "" || $record['value'] == "deleted") {
+					continue;
+				}
+				if(!empty($record['expires'])) {
+					$record['expires'] = strtotime($record['expires']);
+				}
+				$cookieDomain = $domainTree[0];
+				if(isset($record['domain']) && in_array($cookieDomain, $domainTree)) {
+					$cookieDomain = $record['domain'];
+				}
+				$this->cookiePool[$cookieDomain][$cookieName] = $record;
+			}
+		}
 		$info['data'] = $data;
 		if(curl_errno($ch)) {
 			$info['error'] = curl_errno($ch) . ": " . curl_error($ch);
@@ -141,6 +221,19 @@ class CURL {
 	}
 	function post($url, $vars) {
 		return $this->doRequest('POST', $url, $vars);
+	}
+	
+	protected function getDomainTree($host) {
+		$arr = explode(".", $host);
+		$cnt = count($arr);
+		$result = array($host);
+		if(is_numeric($arr[$cnt-1])) {
+			return $result; //IP地址
+		}
+		for($i=1; $i<$cnt-1; $i++) { //至少留两位
+			$result[] = implode(".", array_slice($arr, $i));
+		}
+		return $result;
 	}
 }
 ?>

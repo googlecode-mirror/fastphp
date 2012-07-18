@@ -2,6 +2,22 @@
 
 
 function smarty_function_load_js($params, &$smarty) {
+	$loadMethod = ResourceHelper::getLoadMethod();
+	//装载外部资源: jQuery CDN
+	if(ResourceHelper::isExternalOpen() && defined("__EXTERNAL_JQUERY_URL")) {
+		foreach($params as $key => $val) {
+			if(substr($key, 0, 4) == 'file' || ($val == "jquery.js" || $val == "jquery.min.js")) {
+				echo "<script language='JavaScript' src='".__EXTERNAL_JQUERY_URL."'></script>\r\n";
+				unset($params[$key]);
+				break;
+			}
+		}
+	}
+	//装载外部资源: 外部存储
+	if($loadMethod == "EXTERNAL") {
+		if(load_external_resource("js", $params)) return;
+	}
+		
 	$files = array();
 	foreach($params as $key => $val) {
 		if(substr($key, 0, 4) == 'file') {
@@ -12,11 +28,14 @@ function smarty_function_load_js($params, &$smarty) {
 		}
 	}
 	ksort($files);
-	if(__LOG_LEVEL <= 1) { //DEBUG状态
+	if($loadMethod == "ORIGIN") { //显示原始文件
 		foreach($files as $file) {
 			$url = RewriteHelper::getURL("js", array("file"=>$file));
 			echo "<script language='JavaScript' src='{$url}'></script>\r\n";
 		}
+	} else if($loadMethod == "PAGE") { //显示到页面中
+		$result = __auto_create_js_cache($files, true);
+		echo "<script language='JavaScript'>\r\n".trim($result['data'])."\r\n</script>\r\n";
 	} else {
 		$result = __auto_create_js_cache($files);
 		$url = RewriteHelper::getURL("js_c", array("key"=>$result['md5key'],"res"=>$result['resdir']));
@@ -24,7 +43,7 @@ function smarty_function_load_js($params, &$smarty) {
 	}
 }
 
-function __auto_create_js_cache($files) {
+function __auto_create_js_cache($files, $returnData=false) {
 	//1. 检查文件是否存在，并取得最后修改时间
 	$loadFiles = array();
 	$check = "";
@@ -48,6 +67,9 @@ function __auto_create_js_cache($files) {
 	$result = array('resdir'=>$resdir, 'md5key'=>$md5key);
 	$cacheFile = __FILES_PATH.'res_c/js/'.$resdir.'/'.$md5key.'.js';
 	if(file_exists($cacheFile)) {
+		if($returnData) {
+			$result['data'] = file_get_contents($cacheFile);
+		}
 		return $result;
 	}
 	$data = "";
@@ -74,5 +96,8 @@ function __auto_create_js_cache($files) {
 		mkdir(dirname($cacheFile), 0777, true);
 	}
 	file_put_contents($cacheFile, $data);
+	if($returnData) {
+		$result['data'] = $data;
+	}
 	return $result;
 }

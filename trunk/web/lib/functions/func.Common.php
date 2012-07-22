@@ -110,7 +110,7 @@ function printDebugMessage($message) {
 	if($message == $sPrintNow) {
 		$message = "";
 		if($sMessage != "") {
-			println("\n<BR><HR><PRE>");
+			println("\n<BR clear='all'><HR><PRE>");
 			println($sMessage);
 			$sMessage = "";
 			println("</PRE>");

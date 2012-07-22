@@ -44,7 +44,7 @@ class FastPHP_CSSMin {
 			}
 			$cnt = count($replaceArr);
 			for($i=0; $i<$cnt; $i++) {
-				$url = trim($replaceArr[$i]);
+				$url = trim(str_replace("\"", "", $replaceArr[$i]));;
 				if($url != "http://" && $url != "https://" && substr($url, 0, 1) != '/') {
 					$url = $baseURL . $url;
 				}

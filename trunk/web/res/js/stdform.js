@@ -131,8 +131,16 @@ function __getPrompt(inputname, attrname) {
 }
 
 function __stdform_check(obj) {
-	if(typeof(stdform_check) == "function" && stdform_check(obj) == false) return false;
 	var inputValue = obj.value;
+	if(typeof(obj.__stdform_lastValue) != "undefined" && obj.__stdform_lastValue == inputValue) {
+		return obj.__stdform_lastResult;
+	}
+	obj.__stdform_lastValue = inputValue;
+	obj.__stdform_lastResult = true;
+	if(typeof(stdform_check) == "function" && stdform_check(obj) == false) {
+		obj.__stdform_lastResult = false;
+		return false;
+	}
 
 	var inputname = obj.name;
 	var status = 'VALID';
@@ -190,7 +198,8 @@ function __stdform_check(obj) {
 	}
 	
 	stdform_message(obj,msg,status);
-	return status != 'ERROR';	
+	obj.__stdform_lastResult = (status != 'ERROR');
+	return obj.__stdform_lastResult;
 }
 
 $("form").each(function(i){

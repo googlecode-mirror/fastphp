@@ -44,10 +44,8 @@ class FastPHP_CSSMin {
 			}
 			$cnt = count($replaceArr);
 			for($i=0; $i<$cnt; $i++) {
-				$url = trim(str_replace("\"", "", $replaceArr[$i]));;
-				if($url != "http://" && $url != "https://" && substr($url, 0, 1) != '/') {
-					$url = $baseURL . $url;
-				}
+				$url = trim(str_replace("\"", "", $replaceArr[$i]));
+				$url = self::getAbsoluteURL($url, $baseURL);
 				$replaceArr[$i] = "url({$url})";
 			}
 			//替换操作
@@ -55,4 +53,56 @@ class FastPHP_CSSMin {
 		}
 		return $css;
 	}
+	
+	public static function getAbsoluteURL($url, $baseURL) {
+		if(strtolower(substr($url, 0, 7)) == "http://" || strtolower(substr($url, 0, 8)) == "https://") {
+			return $url;
+		}
+		if(strtolower(substr($baseURL, 0, 7)) == "http://" || strtolower(substr($baseURL, 0, 8)) == "https://") {
+			$isAbsolote = true;
+		} else {
+			$isAbsolote = false;
+		}
+		if(substr($baseURL, -1) != "/") { //最后一位必须是“/”
+			$baseURL .= "/";
+		}
+		if(substr($url, 0, 1) == "/") {
+			if($isAbsolote) {
+				$pos = strpos($baseURL, "/", 8);
+				if($pos > 0) {
+					return substr($baseURL, 0, $pos) . $url;
+				} else {
+					return $baseURL . $url;
+				}
+			} else {
+				return $url;
+			}
+		}
+		if(substr($url, 0, 2) == "./") {
+			return $baseURL . substr($url, 2);
+		}
+		for($i=0; substr($url, 0, 3) == "../"; $i++) {
+			$url = substr($url, 3);
+		}
+		$lastPos = strrpos($baseURL, '/');
+		$len = strlen($baseURL);
+		for(; $i>0; $i--) {
+			if($lastPos == 0) {
+				break;
+			}
+			$pos = strrpos($baseURL, "/", $lastPos - 1 - $len);
+			if($isAbsolute) {
+				if($pos < 10) { //到底了
+					break;
+				}
+			} else {
+				if($pos === false) { //找不到了
+					break;
+				}
+			}
+			$lastPos = $pos;
+		}
+		return substr($baseURL, 0, $lastPos + 1) . $url;
+	}
+	
 }

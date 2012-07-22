@@ -71,7 +71,8 @@ class CURL {
 	 */
 	private $headerEnabled = true;
 	private $customerCookies = array();
-
+	private $headers = array();
+	
 	function getInstance()
 	{
     	if(isset(self::$instances[1])) {
@@ -83,6 +84,9 @@ class CURL {
     	$instance = new CURL();
     	self::$instances[1] = $instance;
     	return $instance;
+	}
+	public function setHeader($name, $value) {
+		$this->headers[$name] = $value;
 	}
 	function addCookie($cookieName, $cookieValue) {
 		$this->customerCookies[$cookieName] = $cookieValue;
@@ -102,7 +106,21 @@ class CURL {
 		curl_setopt($ch, CURLOPT_URL, $url);
 		
 		curl_setopt($ch, CURLOPT_HEADER, $this->headerEnabled);
-		if(isset($_SERVER['HTTP_USER_AGENT'])) {
+		curl_setopt($ch, CURLOPT_ENCODING, "gzip" );
+		$flag = 0;
+		$newHeaders = array();
+		foreach($this->headers as $key => $value) {
+			$str = $key . ": " . $value;
+			$key2 = strtolower($key);
+			if($key2 == "user-agent") {
+				$flag |= 0x01;
+			}
+			$newHeaders[] = $str;
+		}
+		if(count($newHeaders) > 0) {
+			curl_setopt($ch, CURLOPT_HTTPHEADER, $newHeaders);
+		}
+		if(($flag & 0x01 == 0) && isset($_SERVER['HTTP_USER_AGENT'])) {
 			curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
 		}
 		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);

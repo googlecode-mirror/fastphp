@@ -73,7 +73,7 @@ function __auto_create_css_cache($files, $returnData=false) {
 		$str = file_get_contents($originFile);
 		$subBaseURL = $baseURL."css/";
 		$subdir = dirname($info['file']);
-		if($subdir != "") {
+		if($subdir != "" && $subdir != ".") {
 			$subBaseURL .= $subdir . "/";
 		}
 		$str = FastPHP_CSSMin::minify($str, $subBaseURL);

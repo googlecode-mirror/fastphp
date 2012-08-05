@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 {*
-<link href="/res/css/global.css" rel="stylesheet" />
+<link href="/res/css/sample/global.css" rel="stylesheet" />
 <-- 
 *}
 {load_css
@@ -47,7 +47,7 @@ $(function() {
 </head>
 
 <body>
-{include file="Default/Include/Header.tpl"}
+{include file="Default/Sample/Include/Header.tpl"}
 <div style="width:950px; height: 300px; margin:20px auto; ">
 
 <input type="button" name="button" value="Complete Dialog" onClick="completeDialog()"/>
@@ -63,6 +63,6 @@ $(function() {
 </div>
 
 </div>
-{include file="Default/Include/Footer.tpl"}
+{include file="Default/Sample/Include/Footer.tpl"}
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 {*
-<link href="/res/css/global.css" rel="stylesheet" />
+<link href="/res/css/sample/global.css" rel="stylesheet" />
 <-- 
 *}
 {load_css
@@ -16,7 +16,7 @@
 </head>
 
 <body>
-{include file="Default/Include/Header.tpl"}
+{include file="Default/Sample/Include/Header.tpl"}
 <div style="width:950px; height: 300px; margin:20px auto; ">
 这是的Sample首页
 <br />
@@ -26,6 +26,6 @@
 <li><a href="{echo_url type='Sample.VisitLog'}">VisitLog (基本DB操作演示)</a></li>
 </ul>
 </div>
-{include file="Default/Include/Footer.tpl"}
+{include file="Default/Sample/Include/Footer.tpl"}
 </body>
 </html>

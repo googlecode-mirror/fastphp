@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 {*
-<link href="/res/css/global.css" rel="stylesheet" />
+<link href="/res/css/sample/global.css" rel="stylesheet" />
 <-- 
 *}
 {load_css
@@ -22,7 +22,7 @@ td,th {padding: 3px;}
 </head>
 
 <body>
-{include file="Default/Include/Header.tpl"}
+{include file="Default/Sample/Include/Header.tpl"}
 <div style="width:950px; height: 300px; margin:20px auto; ">
 
 <strong>最近来访记录</strong>
@@ -49,6 +49,6 @@ td,th {padding: 3px;}
 </table>
 
 </div>
-{include file="Default/Include/Footer.tpl"}
+{include file="Default/Sample/Include/Footer.tpl"}
 </body>
 </html>

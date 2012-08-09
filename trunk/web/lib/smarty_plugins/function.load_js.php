@@ -6,7 +6,7 @@ function smarty_function_load_js($params, &$smarty) {
 	//装载外部资源: jQuery CDN
 	if(ResourceHelper::isExternalOpen() && defined("__EXTERNAL_JQUERY_URL")) {
 		foreach($params as $key => $val) {
-			if(substr($key, 0, 4) == 'file' || ($val == "jquery.js" || $val == "jquery.min.js")) {
+			if(substr($key, 0, 4) == 'file' && ($val == "jquery.js" || $val == "jquery.min.js")) {
 				echo "<script language='JavaScript' src='".__EXTERNAL_JQUERY_URL."'></script>\r\n";
 				unset($params[$key]);
 				break;

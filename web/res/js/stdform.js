@@ -202,21 +202,25 @@ function __stdform_check(obj) {
 	return obj.__stdform_lastResult;
 }
 
+$(document).ready(function() {
 $("form").each(function(i){
 	if($(this).attr("id") == null || $(this).attr("id").substring(0, 7) != 'stdform') {return;}
 	$(this).find("input,textarea,select").each(function(j) {
 		if(this.tagName == "INPUT" && this.type != "text" && this.type != "password"
 			&& this.type != "checkbox" && this.type != "radio" && this.type != "file") return;
-		$(this).focus(function() {
-			if(typeof(stdform_focus) == "function" && stdform_focus(this) == false) return;
-			
-			var inputname = this.name;
-			
-			var msg = __getPrompt(inputname, 'onFocus');
-			
-			var status = 'NOTICE';
-			stdform_message(this,msg,status);
-		});
+		if(__getPrompt(this.name, "onFocus") != null) {
+			$(this).focus(function() {
+				if(typeof(stdform_focus) == "function" && stdform_focus(this) == false) return;
+				
+				var inputname = this.name;
+				
+				var msg = __getPrompt(inputname, 'onFocus');
+				
+				var status = 'NOTICE';
+				stdform_message(this,msg,status);
+			});
+			$(this).blur(function() { __stdform_check(this); });
+		}
 		$(this).blur(function() { __stdform_check(this); });
 	});
 	$(this).submit(function() {
@@ -235,6 +239,7 @@ $("form").each(function(i){
 		else return true;
 	});
 	
+});
 });
 
 function __stdform_ishide(obj){

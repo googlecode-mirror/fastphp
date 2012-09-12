@@ -93,6 +93,7 @@ function writeLog($file, $message) {
 	}
 	$message = getDateTime() . " - " . $message . "\r\n";
 	$fp = fopen($path.$file, "a+");
+	if($fp == false) return;
 	flock($fp, LOCK_EX);
 	fwrite($fp, $message);
 	flock($fp, LOCK_UN);

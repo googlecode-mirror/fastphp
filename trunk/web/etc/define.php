@@ -24,6 +24,9 @@
 // Note: Please set PRODUCTION when your site released.
 define("__SITE_ENV", "DEVELOPMENT");
 
+// Run as Unix mode. The main features is case-sensitive file names.
+define("__RUN_UNIX_MODE", true);
+
 /// web urls ///
 define("__HOME_URL", "/");
 

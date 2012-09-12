@@ -77,26 +77,6 @@ class HttpRequest {
 	}
 
 	/**
-	 * 取得内部分支
-	 */
-	public function getMethod() {
-		if($this->methodValue == null) {
-			$this->methodValue = $this->getParameter(self::$METHOD_KEY);
-			if($this->methodValue == null) {
-				$this->methodValue = $this->getParameter("method");
-			}
-		}
-		return $this->methodValue;
-	}
-
-	/**
-	 * 取得内部分支
-	 */
-	public function setMethod($methodValue) {
-		$this->methodValue = $methodValue;
-	}
-
-	/**
 	 * 取得$_REQUEST中的参数
 	 */
 	public function get($name) {
@@ -200,6 +180,9 @@ abstract class FastPHP_ActionClass {
 	protected $isAjaxFlag = false;
 	private $smartyData = "";
 	private $defaultMethod = "Index";
+	private $module = "Default";
+	private $action = "Home";
+	private $method = "Index";
 	protected $request = null;
 	protected $response = null;
 	protected $smarty = null;
@@ -218,30 +201,50 @@ abstract class FastPHP_ActionClass {
 	 * @return void
 	 */
 	protected function service() {
-		if(! $this->request->getMethod()) {
-			$this->request->setMethod($this->defaultMethod);
-		}
-		//设置默认的TPL文件名
+		//取出当前实例的模块名，控制名
 		$className = get_class($this);
 		if(strlen($className) <= 6 || substr($className, -6) != "Action") {
 			throw new Exception("class name({$className}) must end by 'Action'");
 		}
-		$dirName = substr($className, 0, -6);
-		if($pos = strrpos($dirName, "_")) {
-			//process Module
+		$actualName = substr($className, 0, -6);
+		if($pos = strpos($actualName, "_")) {
+			$this->module = substr($actualName, 0, $pos);
+			$this->action = substr($actualName, $pos+1);
 			$dirName = str_replace("_", DIRECTORY_SEPARATOR, substr($dirName, 0, $pos+1))
 					. substr($dirName, $pos+1);
 		} else {
+			$this->action = $actualName;
 			$dirName = "Default" . DIRECTORY_SEPARATOR . $dirName;
 		}
-		$method = ucwords($this->request->getMethod());
-		$this->request->setAttribute("__TPL_NAME", $dirName.DIRECTORY_SEPARATOR.$method.".tpl");
-		$method = 'do'.$method."Action";
-		if(method_exists($this, $method)) {
+		$method = 'do'.$this->method."Action";
+		$methods = get_class_methods($this);
+		$similarMethod = null;
+		$existsMethod =  false;
+		foreach($methods as $val) {
+			if(strcasecmp($method, $val) == 0) {
+				if(!defined("__RUN_UNIX_MODE") && __RUN_UNIX_MODE == false) {
+					$existsMethod = true;
+					break;
+				}
+				if(strcmp($method, $val) == 0) {
+					$existsMethod = true;
+				} else {
+					$similarMethod = $val; 
+				}
+				break;
+			}
+		}
+		if($existsMethod) {
+			//设置默认的TPL文件名
+			$this->request->setAttribute("__TPL_NAME", $this->module . DIRECTORY_SEPARATOR
+				. $this->action . DIRECTORY_SEPARATOR . $this->method . ".tpl");
 			call_user_func(array($this, $method));
 		} else {
-			$error = "un-defined method: {$className}.{$method}";
-			throw new Exception($error);
+			$msg = "[FastPHP] un-defined method: {$className}.{$method}";
+			if($similarMethod != null) {
+				$msg .= " (similar method: {$className}.{$similarMethod})";
+			}
+			throw new Exception($msg);
 		}
 	}
 
@@ -284,7 +287,7 @@ abstract class FastPHP_ActionClass {
 			$this->smarty->template_dir = __ROOT_PATH . "tpls/";
 			//指定method
 			if($method != NULL) {
-				$this->request->setMethod($method);
+				$this->method = $method;
 			}
 			//入力检查
 			$this->check();

@@ -97,6 +97,11 @@ function fastphp_run_action($actionkey) {
 	
 	//Create Action Class
 	$obj = new $action;
+	if(defined("__RUN_UNIX_MODE") && __RUN_UNIX_MODE && $action != get_class($obj)) {
+		$msg = "[FastPHP] not exists action: {$action} (similar action: ".classget_class($obj).")";
+		logError($msg);
+		redirect302(__HOME_URL."notfound.php?msg=".urlencode($msg));
+	}
 	$obj->execute($method);
 }
 

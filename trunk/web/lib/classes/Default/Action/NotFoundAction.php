@@ -24,16 +24,14 @@
 class NotFoundAction extends BaseAction {
 	
 	public function doIndexAction() {
-		
-		//显示模板，对应TPL文件：tpls/Default/NotFound/Index.tpl
-		$this->display();
+		header("HTTP/1.1 404 NotFound");
+		echo "404 NotFound";
 	}
 	/**
 	 * 程序异常处理
 	 */
 	public function doExceptionAction() {
-		
-		//显示模板，对应TPL文件：tpls/Default/NotFound/Exception.tpl
-		$this->display();
+		header("HTTP/1.1 500 Internal Server Error");
+		echo "500 Internal Server Error";
 	}
 }

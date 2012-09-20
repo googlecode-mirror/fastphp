@@ -328,4 +328,14 @@ abstract class FastPHP_ActionClass {
 			return $data;
 		}
 	}
+
+	public function getModule() {
+		return $this->module;
+	}
+	public function getAction() {
+		return $this->action;
+	}
+	public function getMethod() {
+		return $this->method;
+	}
 }

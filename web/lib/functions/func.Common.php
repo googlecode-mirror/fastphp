@@ -36,9 +36,10 @@ function getDateTime() {
  * 作日志并终止程序: 系统错误,用于输入的关键参数错误
  * @param message
  */
-function logFatal($message, $model="", $level="FATAL") {
-	writeLog("fatal.log", $message);
-	echo "fatal.";
+function logFatal($message) {
+	writeLog("fatal.log", $message, 4); // 4: ERROR
+	header("HTTP/1.1 500 Internal Server Error");
+	echo "500 Internal Server Error";
 	exit;
 }
 
@@ -46,21 +47,16 @@ function logFatal($message, $model="", $level="FATAL") {
  * 错误日志: 系统错误,用在处理模块中被检测到
  * @param message
  */
-function logError($message, $model="", $level="ERROR") {
-	writeLog("error.log", $message);
-	if(defined("__LOG_LEVEL") && __LOG_LEVEL <= 1 && $model != __MODEL_EMPTY) { // 1: DEBUG
-		printDebugMessage($message);
-	}
+function logError($message) {
+	writeLog("error.log", $message, 4); // 4: ERROR
 }
 
 /**
  * 警告日志: 数据错误
  * @param message
  */
-function logWarn($message, $model="", $level="WARN") {
-	if(defined("__LOG_LEVEL") && __LOG_LEVEL <= 3) { // 3: WARN
-		writeLog("warn.log", $message);
-	}
+function logWarn($message) {
+	writeLog("warn.log", $message, 3); // 3: WARN
 }
 
 /**
@@ -68,9 +64,7 @@ function logWarn($message, $model="", $level="WARN") {
  * @param message
  */
 function logInfo($message, $model="", $level="INFO") {
-	if(defined("__LOG_LEVEL") && __LOG_LEVEL <= 2) { // 2: INFO
-		writeLog("info.log", $message);
-	}
+	writeLog("info.log", $message, 2); // 2: INFO
 }
 
 /**
@@ -78,26 +72,47 @@ function logInfo($message, $model="", $level="INFO") {
  * @param message
  */
 function logDebug($message, $model="", $level="DEBUG") {
-	if(defined("__LOG_LEVEL") && __LOG_LEVEL <= 1) { // 1: DEBUG
-		writeLog("debug.log", $message);
-		if(__LOG_LEVEL == 0) {
-			printDebugMessage($message);
-		}
-	}
+	writeLog("debug.log", $message, 1); // 1: DEBUG
 }
 
-function writeLog($file, $message) {
-	$path = __FILES_PATH . "logs/";
-	if(file_exists($path) == false) {
-		mkdir($path, 0777, true);
+/**
+ * 写日志文件
+ * 
+ * @param $filename - 文件名
+ * @param $message - 日志消息
+ * @param $level - 写入级别（0: DEBUG and PRINT; 1: DEBUG; 2: INFO; 3: WARN; 4: ERROR）
+ */
+function writeLog($filename, $message, $level) {
+	static $sMessage = "";
+	static $sPrintNow = "SYS_2xzWu[2,u/h-plog";
+	static $sRegisterShutdown = false;
+	if($level < __LOG_LEVEL) {
+		return; //写入级别低于预设值，则不作任何记录
 	}
-	$message = getDateTime() . " - " . $message . "\r\n";
-	$fp = fopen($path.$file, "a+");
-	if($fp == false) return;
-	flock($fp, LOCK_EX);
-	fwrite($fp, $message);
-	flock($fp, LOCK_UN);
-	fclose($fp);
+	if(__LOG_LEVEL == 0) {
+		$msg = $message;
+		if($level >= 4) { //ERROR级别的日志
+			$msg = "<font color='red'>{$tmp}</font>";
+		} else if($level == 3) { //WARN级别的日志
+			$msg = "<font color='red'>{$tmp}</font>";
+		}
+		printDebugMessage($msg);
+	}
+	$sMessage .= "\t" . getDateTime() . " - " . $message . "\r\n";
+	if(empty($_SERVER['REMOTE_ADDR']) || $message == $sPrintNow) {
+		$month = date("Ym");
+		$fingerprint = md5(__SITE_FINGERPRINT . $month);
+		$path = __FILES_PATH . "log-{$month}-".substr($fingerprint, 0, 8)."/";
+		if(file_exists($path) == false) {
+			mkdir($path, 0777, true);
+		}
+		$fp = fopen($path.$file, "a+");
+		if($fp == false) return;
+		flock($fp, LOCK_EX);
+		fwrite($fp, $sMessage);
+		flock($fp, LOCK_UN);
+		fclose($fp);
+	}
 }
 
 function printDebugMessage($message) {
@@ -248,4 +263,13 @@ function load_external_resource($type, &$params) {
 	}
 	return false;
 }
+
+function isAjaxRequest() {
+	if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+		strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+		return true;
+	}
+	return false;
+}
+
 

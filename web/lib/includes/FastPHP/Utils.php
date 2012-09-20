@@ -23,9 +23,9 @@
 class FastPHP_Utils {
 	
 	/**
-	 * ÁĞ³öÄ¿Â¼µÄÎÄ¼şÁĞ±í,²»°üÀ¨Ä¿Â¼
-	 * @path Â·¾¶
-	 * @sortBy ÅÅĞò·½Ê½(Ä¬ÈÏ,ÎÄ¼şÃû³Æ,¸üĞÂÊ±¼ä)
+	 * åˆ—å‡ºç›®å½•çš„æ–‡ä»¶åˆ—è¡¨,ä¸åŒ…æ‹¬ç›®å½•
+	 * @path è·¯å¾„
+	 * @sortBy æ’åºæ–¹å¼(é»˜è®¤,æ–‡ä»¶åç§°,æ›´æ–°æ—¶é—´)
 	 */
 	public static function listFiles($path, $orderBy=NULL, $orderType="SORT_ASC") {
 		if(is_dir($path) == false) {
@@ -37,10 +37,11 @@ class FastPHP_Utils {
 		}
 		$fileList = array();
 		while( false != ($file = readdir($handle)) ) {
-			if(is_dir($path . $file)) {
+			if($file == '.' || $file == '..') {
 				continue;
 			}
 			$fileInfo['Name'] = $file;
+			$fileInfo['IsDir'] = is_dir($path . $file);
 			$fileInfo['Modified'] = filemtime($path . $file);
 			$fileList[] = $fileInfo;
 		}
@@ -51,6 +52,73 @@ class FastPHP_Utils {
 			$fileList = sortArray($fileList, "Modified", $orderType);
 		}
 		return $fileList;
+	}
+	
+	
+	public static function searchAllMethod($moduleName="*", $actionName="*") {
+		$classPath = __ROOT_PATH . "lib/classes/";
+		$result = array();
+		//æœç´¢Module
+		$modules = array();
+		if($moduleName == "*") {
+			$files = self::listFiles($classPath);
+			$cnt = count($files);
+			for($i=0; $i<$cnt; $i++) {
+				if($files[$i]['IsDir'] == false) {
+					continue;
+				}
+				$modules[] = $files[$i]['Name'];
+			}
+		} else {
+			$modules[] = $moduleName;
+		}
+		//æœç´¢Action
+		foreach($modules as $module) {
+			$modulePath = $classPath . $module ."/Action/";
+			$actions = array();
+			if($actionName == "*") {
+				$files = self::listFiles($modulePath);
+				$cnt = count($files);
+				for($i=0; $i<$cnt; $i++) {
+					if($files[$i]['IsDir']) {
+						continue;
+					}
+					$name = $files[$i]['Name'];
+					$pos = strpos($name, ".");
+					if($pos == false) {
+						continue;
+					}
+					$name = substr($name, 0, $pos);
+					if(substr($name, -6) == "Action") { //Actionç±»
+						$actions[] = substr($name, 0, -6);
+					}
+				}
+			} else {
+				$actions[] = $actionName;
+			}
+			//æœç´¢Method
+			foreach($actions as $action) {
+				$className = $module . "_" . $action . "Action";
+				$aliasName = "";
+				if($module == "Default") {
+					$aliasName = $action . "Action";
+				}
+				if($aliasName != "" && class_exists($aliasName)) {
+					$className = $aliasName;
+				} else if(class_exists($className) == false) {
+					continue; //ä¸å­˜åœ¨çš„Action	
+				}
+				$methods = get_class_methods($className);
+				foreach($methods as $method) {
+					if(strlen($method) <= 8 || substr($method, 0, 2) != 'do' || substr($method, -6) != 'Action') {
+						continue;
+					}
+					$method = substr($method, 2, -6);
+					$result[$module][$action][] = $method;
+				}
+			}
+		}
+		return $result;
 	}
 	
 }

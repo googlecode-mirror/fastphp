@@ -94,7 +94,7 @@ class System_SharedMemory
         (
             'apc_fetch'    => 'Apc',            // APC
 //        	'shmop_open'   => 'Shmop',          // Shmop
-            'shm_get_var'  => 'Systemv',        // System V
+//            'shm_get_var'  => 'Systemv',        // System V
             'sqlite_open'  => 'Sqlite',         // SQLite
             'file'         => 'File',           // Plain text
         );

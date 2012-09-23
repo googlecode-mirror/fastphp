@@ -1,0 +1,14 @@
+功能改进
+
+  CURL类下载时，使用gzip压缩
+  CSS压缩程序中，将CSS文件引用的图片资源，更新为绝对访问地址
+  stdform表单检查结果缓存（避免Ajax校验不能及时响应的BUG）
+  移除多余的代码。如，将css,tpl的示例代码移到SampleAction中
+  增加当前HTML页面直接加载CSS，JS的功能（__RESOURCE_LOAD_METHOD配置为'PAGE'）
+  静态资源可配置为加载外部资源（__EXTERNAL_RES_SWITCH为启用开关）
+
+修复以下BUG
+
+  DBQuery不支持自定义连接端口的bug
+  二维数组排序函数可能会报Warning警告的bug
+  __HOME_URL 默认定义为 "/"

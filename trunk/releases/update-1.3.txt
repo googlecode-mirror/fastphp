@@ -1,0 +1,30 @@
+新功能新方法
+
+  通过配置文件“config_rewrite.php”，即可自动实现URL规则重写，自动跳转到标准URL等功能（详见配置文件注释）
+  Action基类增加 getModule, getAction, getMethod 方法。用以取得当前运行的方法。
+  FastPHP_Request::encode/decode - 压缩版的urlencode/urldecode
+  FastPHP_Request::isAjaxRequest - 检查是否为Ajax请求
+  FastPHP_Request::isGetMethod - 检查是否为HTTP GET请求
+  FastPHP_Utils::listFiles - 列出目录的文件列表
+  FastPHP_Utils::searchAllMethod - 查找当前项目中，支持HTTP请求的全部方法
+
+
+功能改进
+
+  NotFoundAction输出http code（404或500错误码），并移除默认的模板文件
+  日志记录函数功能升级：一次http请求中的，发生的日志请求，批量写入日志文件
+  日志记录函数安全升级：日志目录按月份存储，并且目录名随机生成
+  文件缓存方法（FastPHP_Cache），增加永久有效缓存的数据接口
+  若配置了“__RUN_UNIX_MODE”，则在执行action时，方法名的大小写变为敏感。
+  System_SharedMemory_File保存日志文件时，自动创建缓存目录
+
+
+define.php新增常量
+
+  // Run as Unix mode. The main features is case-sensitive file names.
+  define("__RUN_UNIX_MODE", true);
+  
+  // URL Rewrite startup mode for SEO
+  // optional parameter: CLOSE, BASIC, BASIC_R301, PERFECT, PERFECT_R301 
+  define("__REWRITE_RULE_MODE", "PERFECT_R301");
+

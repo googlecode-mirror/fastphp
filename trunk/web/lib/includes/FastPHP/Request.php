@@ -113,6 +113,9 @@ class FastPHP_Request {
 		return $ret;
 	}
 	
+	/**
+	 * 检查是否为Ajax请求
+	 */
 	public static function isAjaxRequest() {
 		if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
 			strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
@@ -121,6 +124,9 @@ class FastPHP_Request {
 		return false;
 	}
 
+	/**
+	 * 检查是否为HTTP GET请求
+	 */
 	public static function isGetMethod() {
 		if(isset($_ENV['REQUEST_METHOD']) && $_ENV['REQUEST_METHOD'] == "GET") {
 			return true;

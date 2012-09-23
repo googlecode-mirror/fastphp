@@ -23,7 +23,7 @@
 class FastPHP_Utils {
 	
 	/**
-	 * 列出目录的文件列表,不包括目录
+	 * 列出目录的文件列表
 	 * @path 路径
 	 * @sortBy 排序方式(默认,文件名称,更新时间)
 	 */
@@ -54,7 +54,12 @@ class FastPHP_Utils {
 		return $fileList;
 	}
 	
-	
+	/**
+	 * 查找当前项目中，支持HTTP请求的全部方法
+	 * 
+	 * @param $moduleName 值“*”表示全部
+	 * @param $actionName 值“*”表示全部
+	 */
 	public static function searchAllMethod($moduleName="*", $actionName="*") {
 		$classPath = __ROOT_PATH . "lib/classes/";
 		$result = array();

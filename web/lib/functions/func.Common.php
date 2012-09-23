@@ -82,8 +82,8 @@ function logDebug($message, $model="", $level="DEBUG") {
  * @param $message - 日志消息
  * @param $level - 写入级别（0: DEBUG and PRINT; 1: DEBUG; 2: INFO; 3: WARN; 4: ERROR）
  */
-function writeLog($filename, $message, $level) {
-	static $sMessage = "";
+function writeLog($filename, $message, $level=1) {
+	static $sMessageMap = array();
 	static $sPrintNow = "SYS_2xzWu[2,u/h-plog";
 	static $sRegisterShutdown = false;
 	if($level < __LOG_LEVEL) {
@@ -92,26 +92,39 @@ function writeLog($filename, $message, $level) {
 	if(__LOG_LEVEL == 0) {
 		$msg = $message;
 		if($level >= 4) { //ERROR级别的日志
-			$msg = "<font color='red'>{$tmp}</font>";
+			$msg = "<font color='red'>{$msg}</font>";
 		} else if($level == 3) { //WARN级别的日志
-			$msg = "<font color='red'>{$tmp}</font>";
+			$msg = "<font color='red'>{$msg}</font>";
 		}
 		printDebugMessage($msg);
 	}
-	$sMessage .= "\t" . getDateTime() . " - " . $message . "\r\n";
-	if(empty($_SERVER['REMOTE_ADDR']) || $message == $sPrintNow) {
+	if($message == $sPrintNow) {
 		$month = date("Ym");
 		$fingerprint = md5(__SITE_FINGERPRINT . $month);
 		$path = __FILES_PATH . "log-{$month}-".substr($fingerprint, 0, 8)."/";
 		if(file_exists($path) == false) {
 			mkdir($path, 0777, true);
 		}
-		$fp = fopen($path.$file, "a+");
-		if($fp == false) return;
-		flock($fp, LOCK_EX);
-		fwrite($fp, $sMessage);
-		flock($fp, LOCK_UN);
-		fclose($fp);
+		foreach($sMessageMap as $filename => $msg) {
+			$fp = fopen($path.$filename, "a+");
+			if($fp == false) return;
+			flock($fp, LOCK_EX);
+			fwrite($fp, $msg);
+			flock($fp, LOCK_UN);
+			fclose($fp);
+		}
+		$sMessageMap = array();
+	} else {
+		if(isset($sMessageMap[$filename]) == false) {
+			$sMessageMap[$filename] = date("Ymd"). " <<<<< " . $_SERVER['REMOTE_ADDR'] . ' - ' . $_SERVER['REQUEST_URI'] . " >>>>>\r\n";
+		}
+		$sMessageMap[$filename] .= date("H:i:s") . "\t" . $message . "\r\n";
+		if(empty($_SERVER['REMOTE_ADDR'])) {
+			writeLog("writenow.log", $sPrintNow, $level);
+		} else if($sRegisterShutdown == false) {
+			register_shutdown_function(writeLog, "writenow.log", $sPrintNow, 5);
+			$sRegisterShutdown = true;
+		}
 	}
 }
 
@@ -119,27 +132,26 @@ function printDebugMessage($message) {
 	static $sMessage = "";
 	static $sPrintNow = "SYS_2xzWu[2,u/1aoz";
 	static $sRegisterShutdown = false;
+	if($message == "" || __LOG_LEVEL != 0 || FastPHP_Request::isAjaxRequest()) {
+		return;
+	}
 	if(defined("__SITE_ENV") && __SITE_ENV == "PRODUCTION"
 		&& $_COOKIE['HP_DEBUG_MSG'] != md5('PRINT-'.__SITE_FINGERPRINT)) {
 		return;
 	}
 	if($message == $sPrintNow) {
-		$message = "";
 		if($sMessage != "") {
 			println("\n<BR clear='all'><HR><PRE>");
 			println($sMessage);
 			$sMessage = "";
 			println("</PRE>");
 		}
-		return;
-	}
-	if($message == "") {
-		return;
-	}
-	$sMessage .= $message ."\n";
-	if($sRegisterShutdown == false) {
-		register_shutdown_function(printDebugMessage, $sPrintNow);
-		$sRegisterShutdown = true;
+	} else {
+		$sMessage .= $message ."\n";
+		if($sRegisterShutdown == false) {
+			register_shutdown_function(printDebugMessage, $sPrintNow);
+			$sRegisterShutdown = true;
+		}
 	}
 }
 

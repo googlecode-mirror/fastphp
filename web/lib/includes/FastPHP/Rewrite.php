@@ -249,7 +249,7 @@ class FastPHP_Rewrite {
 			if($staticParamStr != "") {
 				$arr = explode("--", $staticParamStr);
 				foreach($arr as $str) {
-					$arr2 = explode("-", $staticParamStr, 2);
+					$arr2 = explode("-", $str, 2);
 					$parsedParams[$arr2[0]] = FastPHP_Request::decode($arr2[1]);
 				}
 			}
@@ -272,6 +272,5 @@ class FastPHP_Rewrite {
 			return "NotFound";
 		}
 	}
-	
 	
 }

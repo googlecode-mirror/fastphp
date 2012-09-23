@@ -41,24 +41,22 @@ class RewriteHelper {
 	}
 	
 	protected static function getCustomPage($type, $params) {
+		//转换ActionKey为，缩写格式
+		if($pos = strpos($type, '_')) {
+			if(substr($type, 0, $pos) == "Default") {
+				$type = substr($type, $pos + 1);
+			}
+		}
+		if($pos = strrpos($type, '.')) {
+			if(substr($type, $pos) == ".Index") {
+				$type = substr($type, 0, $pos);
+			}
+		}
 		//Note: 在此编写自定义的URL规则
 		switch($type) {
 		default:
-			$url = self::getDefaultPage($type, $params);
+			$url = FastPHP_Rewrite::generateURL($type, $params);
 		}
-		return $url;
-	}
-
-	protected static function getDefaultPage($type, $params) {
-		$url = __HOME_URL."action.php?actionkey=".$type;
-		if(empty($params)) {
-			return $url;
-		}
-		$str = "";
-		foreach($params as $key => $val) {
-			$str .= "&{$key}=".urlencode($val);
-		}
-		$url .= $str;
 		return $url;
 	}
 

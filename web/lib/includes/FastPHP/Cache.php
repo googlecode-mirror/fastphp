@@ -23,7 +23,7 @@
 class FastPHP_Cache {
 	
 	/**
-	 * 取的缓存的文件（自动反序列化）
+	 * 取得缓存的文件（自动反序列化）
 	 * @param $file - 缓存文件路径
 	 * @param $notCheckExpire - 不检查缓存的过期时间（默认为false）
 	 * @return 找不到数据，则返回false。否则，返回反序列化后的数据

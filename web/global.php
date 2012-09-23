@@ -107,6 +107,7 @@ function fastphp_run_action($actionkey) {
 
 require_once(__ROOT_PATH . "etc/define.php");
 require_once(__ROOT_PATH . "lib/functions/func.Common.php");
+require_once(__ROOT_PATH . "etc/config_rewrite.php");
 
 //设置PHP运行环境的时区
 date_default_timezone_set(__TIMEZONE);
@@ -115,8 +116,7 @@ mb_internal_encoding(__CHARSET);
 
 //自动创建必要目录
 if(file_exists(__FILES_PATH . "templates_c/") == false) {
-	mkdir(__FILES_PATH . "logs/");
-	mkdir(__FILES_PATH . "templates_c/");
+	mkdir(__FILES_PATH . "templates_c/", 0777, true);
 }
 
 } //end of __FILE_GLOBAL_PHP

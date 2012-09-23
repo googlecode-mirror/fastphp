@@ -37,6 +37,10 @@ $__IMAGE_DOMAINS = array(
 	$_SERVER['HTTP_HOST'],
 );
 
+// URL Rewrite startup mode for SEO
+// optional parameter: CLOSE, BASIC, BASIC_R301, PERFECT, PERFECT_R301 
+define("__REWRITE_RULE_MODE", "PERFECT_R301");
+
 define("__RESOURCE_BASE_URL", __HOME_URL."res/");
 // process method for load_js & load_css.
 // optional parameter: AUTO, URL, PAGE, ORIGIN, EXTERNAL

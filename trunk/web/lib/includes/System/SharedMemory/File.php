@@ -137,7 +137,14 @@ class System_SharedMemory_File extends System_SharedMemory_Common
      */
     function set($name, $value)
     {
-        $fp = fopen($this->_options['tmp'].'/smf_'.md5($name), 'ab');
+    	$path = $this->_options['tmp'];
+    	if(substr($path, -1) != '/' && substr($path, -1) != "\\") {
+    		$path .= '/';
+    	}
+    	if(file_exists($path) == false) {
+    		mkdir($path, 0777, true);
+    	}
+        $fp = fopen($path.'smf_'.md5($name), 'ab');
 
         if (is_resource($fp)) {
             flock ($fp, LOCK_EX);

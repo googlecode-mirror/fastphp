@@ -22,6 +22,8 @@
 
 require(dirname(__FILE__) . "/global.php");
 
+$fastphp_actionkey = FastPHP_Rewrite::parseRequest();
+
 //Create Action Class
-fastphp_run_action($_REQUEST['actionkey']);
+fastphp_run_action($fastphp_actionkey);
 

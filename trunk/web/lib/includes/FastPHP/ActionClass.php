@@ -201,21 +201,6 @@ abstract class FastPHP_ActionClass {
 	 * @return void
 	 */
 	protected function service() {
-		//取出当前实例的模块名，控制名
-		$className = get_class($this);
-		if(strlen($className) <= 6 || substr($className, -6) != "Action") {
-			throw new Exception("class name({$className}) must end by 'Action'");
-		}
-		$actualName = substr($className, 0, -6);
-		if($pos = strpos($actualName, "_")) {
-			$this->module = substr($actualName, 0, $pos);
-			$this->action = substr($actualName, $pos+1);
-			$dirName = str_replace("_", DIRECTORY_SEPARATOR, substr($dirName, 0, $pos+1))
-					. substr($dirName, $pos+1);
-		} else {
-			$this->action = $actualName;
-			$dirName = "Default" . DIRECTORY_SEPARATOR . $dirName;
-		}
 		$method = 'do'.$this->method."Action";
 		$methods = get_class_methods($this);
 		$similarMethod = null;
@@ -240,6 +225,7 @@ abstract class FastPHP_ActionClass {
 				. $this->action . DIRECTORY_SEPARATOR . $this->method . ".tpl");
 			call_user_func(array($this, $method));
 		} else {
+			$className = get_class($this);
 			$msg = "[FastPHP] un-defined method: {$className}.{$method}";
 			if($similarMethod != null) {
 				$msg .= " (similar method: {$className}.{$similarMethod})";
@@ -268,13 +254,26 @@ abstract class FastPHP_ActionClass {
 	/**
 	 * Controller层的调用入口函数,在scripts中调用
 	 */
-	public function execute($method=NULL) {
+	public function execute($method) {
 		static $runCount = 0;
 		$runCount++;
 		
 		// include smarty class
 		require_once(__ROOT_PATH . '/lib/includes/Smarty/Smarty.class.php');
 		try {
+			//取出当前实例的模块名，控制名
+			$className = get_class($this);
+			if(strlen($className) <= 6 || substr($className, -6) != "Action") {
+				throw new Exception("class name({$className}) must end by 'Action'");
+			}
+			$actualName = substr($className, 0, -6);
+			if($pos = strpos($actualName, "_")) {
+				$this->module = substr($actualName, 0, $pos);
+				$this->action = substr($actualName, $pos+1);
+			} else {
+				$this->action = $actualName;
+			}
+			$this->method = $method;
 			//开始执行
 			$this->beforeExecute();
 			
@@ -285,10 +284,6 @@ abstract class FastPHP_ActionClass {
 			$this->smarty->compile_dir  = __FILES_PATH . "templates_c/";
 			$this->smarty->plugins_dir[] = __ROOT_PATH . 'lib/smarty_plugins';
 			$this->smarty->template_dir = __ROOT_PATH . "tpls/";
-			//指定method
-			if($method != NULL) {
-				$this->method = $method;
-			}
 			//入力检查
 			$this->check();
 			//执行方法

@@ -94,8 +94,11 @@ class FastPHP_Rewrite {
 		$actionkey = self::parseActionKey();
 		//检查URL是否规范化
 		if(FastPHP_Request::isGetMethod()) { //仅GET方法才可能跳转
-			$mode = __REWRITE_RULE_MODE;
+			if(isset($_FASTPHP_REWRITE_RULE[$actionkey]) == false) {
+				return $actionkey;
+			}
 			$config = & $_FASTPHP_REWRITE_RULE[$actionkey];
+			$mode = __REWRITE_RULE_MODE;
 			if(!empty($config['mode'])) {
 				$mode = $config['mode'];
 			}
@@ -133,6 +136,10 @@ class FastPHP_Rewrite {
 	
 	private static function parseActionKey() {
 		global $_FASTPHP_REWRITE_RULE;
+		// 如已指定，则直接返回
+		if(!empty($_REQUEST['actionkey'])) {
+			return $_REQUEST['actionkey'];
+		}
 		// 解析 Path & Query
 		$path = $_SERVER['REQUEST_URI'];
 		$query = "";

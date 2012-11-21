@@ -290,14 +290,12 @@ abstract class FastPHP_ActionClass {
 			$this->service();
 			//完成运行
 			$this->afterExecute();
-		} catch (InputCheckException $e) {
-			if($this->occurException($e)) {
-				logWarn($e->getMessage() . "\n" . $e->getTraceAsString());
-				if($runCount <= 1) fastphp_run_action("NotFound.Exception");
-			}
 		} catch (Exception $e) {
 			if($this->occurException($e)) {
-				logError($e->getMessage() . "\n" . $e->getTraceAsString());
+				global $fastphp_ErrorMessage;
+				$msg = $e->getMessage() . "\n" . $e->getTraceAsString();
+				$fastphp_ErrorMessage = $msg;
+				logError($msg);
 				if($runCount <= 1) fastphp_run_action("NotFound.Exception");
 			}
 		}

@@ -39,7 +39,7 @@ $__IMAGE_DOMAINS = array(
 
 // URL Rewrite startup mode for SEO
 // optional parameter: CLOSE, BASIC, BASIC_R301, PERFECT, PERFECT_R301 
-define("__REWRITE_RULE_MODE", "PERFECT_R301");
+define("__REWRITE_RULE_MODE", "CLOSE");
 
 define("__RESOURCE_BASE_URL", __HOME_URL."res/");
 // process method for load_js & load_css.

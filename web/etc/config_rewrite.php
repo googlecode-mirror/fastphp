@@ -10,6 +10,7 @@
  * 			PERFECT - 附加参数转换格式为 .htm
  * 			PERFECT_R301 - 同上，检查URl唯一性，并跳转
  * rule 对应的 URL 规则相对于 __HOME_URL
+ *      使用“|”语法，表示仅满足“|”的前面部分规则也成立（参考Sample.Dialog中的用法）
  * 
 # URL重写规则配置参考（Apache版）
 RewriteEngine On
@@ -19,9 +20,9 @@ RewriteRule .*	/action.php [L]
  */
 
 $_FASTPHP_REWRITE_RULE = array(
-	'Home' => array('rule'=>'/'),
+	//'Home' => array('rule'=>'/'), //指向HomeAction
 	'Sample' => array('rule'=>'/sample/', 'type'=>array('sc'=>'[a-z]+')),
-	'Sample.Dialog' => array('rule'=>'/dialog/{$Dialog}', 'type'=>array('Dialog'=>'\w+')),
+	'Sample.Dialog' => array('rule'=>'/sample_dialog|/{$Dialog}', 'type'=>array('Dialog'=>'\w+')),
 	'NotFound' => array('mode'=>'CLOSE'),
 );
 

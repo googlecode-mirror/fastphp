@@ -1,7 +1,7 @@
 <?php
 /**
  * Project:     ActionPHP (The MVC Framework) 
- * File:        Rewrite.php
+ * File:	Rewrite.php
  *
  * This framework is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,45 +35,42 @@ class FastPHP_Rewrite {
 			}
 			$config = $_FASTPHP_REWRITE_RULE[$type];
 			$rule = substr($config['rule'], 1); //跳过第一个 “/”
-			if(preg_match_all('/\{\$([^\}]+)\}/', $rule, $matches)) {
-				$cnt = count($matches[1]);
-				for($i=0; $i<$cnt; $i++) {
-					$key = $matches[1][$i];
-					if(isset($params[$key])) {
-						$matches[1][$i] = FastPHP_Request::encode($params[$key]);
-						unset($params[$key]);
-					} else {
-						$matches[1][$i] = "";
+
+			if(strpos($rule, "|") !== false) {
+				foreach(explode("|", $rule) as $subRule) {
+					$str = self::getSubURL($params, $config, $subRule, true);
+					if($str === false) {
+						break;
 					}
-				}
-				$rule = str_replace($matches[0], $matches[1], $rule);
-				$url .= $rule;
-				if(count($params) > 0) {
-					ksort($params); //剩余参数默认按key排序
-					$mode = __REWRITE_RULE_MODE;
-					if(!empty($config['mode'])) {
-						$mode = $config['mode'];
-					}
-					if($mode == "PERFECT" || $mode == "PERFECT_R301") {
-						if(substr($url, -1) != '/') {
-							$url .= '/';
-						}
-						$str = "";
-						foreach($params as $key => $val) {
-							$val = FastPHP_Request::encode($val);
-							$str .= "--{$key}-{$val}";
-						}
-						$url .= substr($str, 2).".htm";
-					} else {
-						$str = "";
-						foreach($params as $key => $val) {
-							$str .= "&{$key}=".urlencode($val);
-						}
-						$url .= '?' . substr($str, 1);
-					}
+					$url .= $str;
 				}
 			} else {
-				$url .= $rule;
+				$url .= self::getSubURL($params, $config, $rule);
+			}
+
+			if(count($params) > 0) {
+				ksort($params); //剩余参数默认按key排序
+				$mode = __REWRITE_RULE_MODE;
+				if(!empty($config['mode'])) {
+					$mode = $config['mode'];
+				}
+				if($mode == "PERFECT" || $mode == "PERFECT_R301") {
+					if(substr($url, -1) != '/') {
+						$url .= '/';
+					}
+					$str = "";
+					foreach($params as $key => $val) {
+						$val = FastPHP_Request::encode($val);
+						$str .= "--{$key}-{$val}";
+					}
+					$url .= substr($str, 2).".htm";
+				} else {
+					$str = "";
+					foreach($params as $key => $val) {
+						$str .= "&{$key}=".urlencode($val);
+					}
+					$url .= '?' . substr($str, 1);
+				}
 			}
 		} else {
 			$url .= "action.php?actionkey=".$type;
@@ -88,17 +85,14 @@ class FastPHP_Rewrite {
 		}
 		return $url;
 	}
-	
+
 	public static function parseRequest() {
 		global $_FASTPHP_REWRITE_RULE;
 		$actionkey = self::parseActionKey();
 		//检查URL是否规范化
 		if(FastPHP_Request::isGetMethod()) { //仅GET方法才可能跳转
-			if(isset($_FASTPHP_REWRITE_RULE[$actionkey]) == false) {
-				return $actionkey;
-			}
-			$config = & $_FASTPHP_REWRITE_RULE[$actionkey];
 			$mode = __REWRITE_RULE_MODE;
+			$config = & $_FASTPHP_REWRITE_RULE[$actionkey];
 			if(!empty($config['mode'])) {
 				$mode = $config['mode'];
 			}
@@ -133,13 +127,9 @@ class FastPHP_Rewrite {
 		}
 		return $actionkey;
 	}
-	
+
 	private static function parseActionKey() {
 		global $_FASTPHP_REWRITE_RULE;
-		// 如已指定，则直接返回
-		if(!empty($_REQUEST['actionkey'])) {
-			return $_REQUEST['actionkey'];
-		}
 		// 解析 Path & Query
 		$path = $_SERVER['REQUEST_URI'];
 		$query = "";
@@ -184,72 +174,82 @@ class FastPHP_Rewrite {
 		//URL规则匹配
 		$find_actionkey = null;
 		foreach($_FASTPHP_REWRITE_RULE as $key => &$config) {
-			$rule = $config['rule'];
+	  if(empty($config['rule'])) continue;
 			if($pathLen == 0) { //特殊情形 - 首页地址
-				if($rule == "/") {
+				if($config['rule'] == "/") {
 					$find_actionkey = $key;
 					break;
 				}
 				continue;
 			}
-			$ruleLen = strlen($rule);
-			$pos = strpos($rule, '{');
-			if($pos === false) {
-				if(substr($rule, -1) == '/') {
-					if(substr($rule, 0, -1) == $path) {
+			$preRule = "";
+			foreach(explode("|", $config['rule']) as $str) {
+				if($str == "") {
+					continue;
+				}
+				$preRule .= $str;
+				$rule = $preRule;
+				if(substr($rule, -1) == "/") {
+					$rule = substr($rule, 0, -1);
+				}
+
+				$ruleLen = strlen($rule);
+				$pos = strpos($rule, '{');
+				if($pos === false) {
+					if($rule == $path) { //没有表达式，结尾没有 “/”
+						$find_actionkey = $key;
 						break;
 					}
-				} else if($rule == $path) { //没有表达式，结尾没有 “/” 
+					continue;
+				}
+				if($pos >= $pathLen
+					|| substr($rule, 0, $pos) != substr($path, 0, $pos)) {
+					continue;
+				}
+				//正则匹配
+				$regex = "";
+				$varNames = array();
+				for($i=0; $i<$ruleLen; $i++) {
+					if($rule[$i] == '/') {
+						$regex .= "\\/";
+					} else if($rule[$i] == '{') {
+						//do check
+						//if($rule[$i+1] != '$') {
+						//}
+						$i += 2; //跳过 “{$”
+						//$rule[$i] = "";
+						$varName = "";
+						for(; $i<$ruleLen; $i++) {
+							if($rule[$i] == '}') {
+								$i++; //跳过 }
+								break;
+							}
+							$varName .= $rule[$i];
+						}
+						if(!empty($config['type'][$varName])) {
+							$regex .= "(".$config['type'][$varName].")";
+							$varNames[] = $varName;
+						} else {
+							logDebug("[RewriteRule] ActionKey: {$key}, Rule={$rule}, IgnoreVariable={$varName}.");
+						}
+					} else {
+						$regex .= $rule[$i];
+					}
+				}
+				$matches = array();
+				if(@preg_match("/^{$regex}/", $path, $matches)) {
+					//找到了
+					//提取变量
+					foreach($varNames as $index => $varName) {
+						$parsedParams[$varName] = FastPHP_Request::decode($matches[$index + 1]);
+					}
+					$find_actionkey = $key;
 					break;
 				}
-				continue;
 			}
-			if($pos > $pathLen - 1
-				|| ($pos == $pathLen && $rule[$pos-1] != '/')
-				|| substr($rule, 0, $pos) != substr($path, 0, $pos)) {
-				continue;
+			if($find_actionkey !== null) {
+				break;
 			}
-			//正则匹配
-			$regex = "";
-			$varNames = array();
-			for($i=0; $i<$ruleLen; $i++) {
-				if($rule[$i] == '/') {
-					$regex .= "\\/";
-				} else if($rule[$i] == '{') {
-					//do check
-					//if($rule[$i+1] != '$') {
-					//}
-					$i += 2; //跳过 “{$”
-					//$rule[$i] = "";
-					$varName = "";
-					for(; $i<$ruleLen; $i++) {
-						if($rule[$i] == '}') {
-							$i++; //跳过 }
-							break;
-						}
-						$varName .= $rule[$i];
-					}
-					if(!empty($config['type'][$varName])) {
-						$regex .= "(".$config['type'][$varName].")";
-						$varNames[] = $varName;
-					} else {
-						logDebug("[RewriteRule] ActionKey: {$key}, Rule={$rule}, IgnoreVariable={$varName}.");
-					}
-				} else {
-					$regex .= $rule[$i];
-				}
-			}
-			$matches = array();
-			if(@preg_match("/^{$regex}/", $path, $matches) == false) {
-				continue;
-			}
-			//找到了
-			$find_actionkey = $key;
-			//提取变量
-			foreach($varNames as $index => $varName) {
-				$parsedParams[$varName] = FastPHP_Request::decode($matches[$index + 1]);
-			}
-			break;
 		}
 		if($find_actionkey !== null) {
 			//解析自动静态化变量
@@ -269,15 +269,38 @@ class FastPHP_Rewrite {
 		}
 	}
 
+	private static function getSubURL(&$params, &$config, $subRule, $checkType=false) {
+			if(preg_match_all('/\{\$([^\}]+)\}/', $subRule, $matches)) {
+				$cnt = count($matches[1]);
+				for($i=0; $i<$cnt; $i++) {
+					$key = $matches[1][$i];
+					if(isset($params[$key])) {
+						$matches[1][$i] = FastPHP_Request::encode($params[$key]);
+						unset($params[$key]);
+					} else {
+						$matches[1][$i] = "";
+					}
+					if($checkType && !empty($config['type'][$key])
+						&& preg_match("/".$config['type'][$key]."/", $matches[1][$i]) == false) {
+						return false;
+					}
+				}
+				return str_replace($matches[0], $matches[1], $subRule);
+			} else {
+				return $subRule;
+			}
+	}
+
 	private static function getDefaultActionKey($homePath, $path) {
 		if(!empty($_REQUEST['actionkey'])) {
 			return $_REQUEST['actionkey'];
 		}
-		if($path == "/" || $homePath == $path || $homePath."index.php" == $path) {
+		if(($path == "/" || $homePath == $path || $homePath."index.php" == $path)
+			&& file_exists(__ROOT_PATH."lib/classes/Default/Action/HomeAction.php")) {
 			return "Home";
 		} else {
 			return "NotFound";
 		}
 	}
-	
+
 }

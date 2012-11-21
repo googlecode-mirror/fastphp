@@ -126,4 +126,31 @@ class FastPHP_Utils {
 		return $result;
 	}
 	
+	/**
+	 * 字符串截取
+	 * @param $str - 带处理字符串
+	 * @param $len 截取的长度
+	 * @param $fillStr 填充字符串，默认为“...”
+	 * @param $charset 字符编码，默认为系统设置的__CHARSET
+	 */
+	public static function truncate($str, $len, $fillStr="...", $charset=__CHARSET) {
+		if(strlen($str) <= $len) {
+			return $str;
+		}
+		$mbLen = mb_strlen($str, $charset);
+		$len -= strlen($fillStr);
+		$newStr = "";
+		for($loop=0; $loop<$mbLen; $loop++) {
+			$ch = mb_substr($str, $loop, 1);
+			$cnt = strlen($ch) > 1 ? 2 : 1;
+			if($len - $cnt < 0) {
+				break;
+			}
+			$len -= $cnt;
+			$newStr .= $ch;
+		}
+		$newStr .= $fillStr;
+		return $newStr;
+	}
+	
 }
